@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Feature Authorization Hub"
+description = "A review-first control center for Replit projects that gates AI-generated changes behind explicit human approval, separates builder and reviewer responsibilities, and keeps a verifiable audit trail."
+version = "1.0.0"
+id = "artifacts/authorization-hub"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24871
+
+[services.development]
+run = "pnpm --filter @workspace/authorization-hub run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/authorization-hub", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/authorization-hub/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24871"
+BASE_PATH = "/"

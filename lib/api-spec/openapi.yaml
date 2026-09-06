@@ -10,6 +10,16 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Authorization hub overview
+  - name: projects
+    description: Connected Replit projects
+  - name: features
+    description: Feature-level controls and policies
+  - name: reviews
+    description: Human review queue and sign-offs
+  - name: activity
+    description: Audit trail
 paths:
   /healthz:
     get:
@@ -24,7 +34,212 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get authorization hub summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List connected projects
+      responses:
+        "200":
+          description: Connected projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Connect a Replit project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: Connected project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+  /projects/{projectId}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get a connected project
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Connected project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /projects/{projectId}/revoke:
+    post:
+      operationId: revokeProject
+      tags: [projects]
+      summary: Revoke a project's connection
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Revoked project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+  /features:
+    get:
+      operationId: listFeatures
+      tags: [features]
+      summary: List feature authorization policies
+      parameters:
+        - in: query
+          name: projectId
+          schema:
+            type: [string, "null"]
+      responses:
+        "200":
+          description: Feature policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Feature"
+    post:
+      operationId: createFeature
+      tags: [features]
+      summary: Create a gated feature policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeatureInput"
+      responses:
+        "201":
+          description: Feature policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feature"
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: List change requests awaiting human review
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+            default: pending
+      responses:
+        "200":
+          description: Review requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+  /reviews/{reviewId}:
+    get:
+      operationId: getReview
+      tags: [reviews]
+      summary: Get a review request
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "200":
+          description: Review request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+    patch:
+      operationId: decideReview
+      tags: [reviews]
+      summary: Approve or reject a change request
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewDecision"
+      responses:
+        "200":
+          description: Decided review request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [activity]
+      summary: List recent authorization activity
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
 components:
+  parameters:
+    ProjectId:
+      in: path
+      name: projectId
+      required: true
+      schema:
+        type: string
+    ReviewId:
+      in: path
+      name: reviewId
+      required: true
+      schema:
+        type: string
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +248,108 @@ components:
           type: string
       required:
         - status
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    Project:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        repository: { type: string }
+        environment: { type: string }
+        status:
+          type: string
+          enum: [connected, attention, revoked]
+        connectedAt: { type: string, format: date-time }
+        features: { type: integer }
+        pendingReviews: { type: integer }
+      required: [id, name, slug, repository, environment, status, connectedAt, features, pendingReviews]
+    ProjectInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        slug: { type: string, minLength: 1 }
+        repository: { type: string, minLength: 1 }
+        environment: { type: string, enum: [development, staging, production] }
+      required: [name, slug, repository, environment]
+    Feature:
+      type: object
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        projectName: { type: string }
+        name: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [protected, review, paused] }
+        builder: { type: string }
+        reviewer: { type: string }
+        pendingReviews: { type: integer }
+        lastChange: { type: ["string", "null"], format: date-time }
+        requiresHumanSignoff: { type: boolean }
+      required: [id, projectId, projectName, name, description, status, builder, reviewer, pendingReviews, lastChange, requiresHumanSignoff]
+    FeatureInput:
+      type: object
+      properties:
+        projectId: { type: string }
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        builder: { type: string, minLength: 1 }
+        reviewer: { type: string, minLength: 1 }
+      required: [projectId, name, description, builder, reviewer]
+    Review:
+      type: object
+      properties:
+        id: { type: string }
+        featureId: { type: string }
+        featureName: { type: string }
+        projectName: { type: string }
+        title: { type: string }
+        summary: { type: string }
+        builder: { type: string }
+        reviewer: { type: string }
+        status: { type: string, enum: [pending, approved, rejected] }
+        filesChanged: { type: integer }
+        risk: { type: string, enum: [low, medium, high] }
+        submittedAt: { type: string, format: date-time }
+        decidedAt: { type: ["string", "null"], format: date-time }
+        decisionNote: { type: ["string", "null"] }
+      required: [id, featureId, featureName, projectName, title, summary, builder, reviewer, status, filesChanged, risk, submittedAt, decidedAt, decisionNote]
+    ReviewDecision:
+      type: object
+      properties:
+        decision: { type: string, enum: [approved, rejected] }
+        note: { type: string, maxLength: 500 }
+      required: [decision]
+    Activity:
+      type: object
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [submitted, approved, rejected, connected, revoked] }
+        title: { type: string }
+        detail: { type: string }
+        actor: { type: string }
+        occurredAt: { type: string, format: date-time }
+      required: [id, kind, title, detail, actor, occurredAt]
+    DashboardSummary:
+      type: object
+      properties:
+        pendingReviews: { type: integer }
+        connectedProjects: { type: integer }
+        protectedFeatures: { type: integer }
+        approvedThisWeek: { type: integer }
+        blockedChanges: { type: integer }
+        reviewSlaHours: { type: number }
+        latestReview:
+          type: ["object", "null"]
+          $ref: "#/components/schemas/Review"
+        activity:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+      required: [pendingReviews, connectedProjects, protectedFeatures, approvedThisWeek, blockedChanges, reviewSlaHours, latestReview, activity]
 
