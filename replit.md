@@ -1,6 +1,6 @@
-# [Project name]
+# Feature Authorization Hub
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A review-first control plane that prevents AI-generated changes from reaching connected projects until a designated human reviewer approves them.
 
 ## Run & Operate
 
@@ -22,15 +22,23 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/authorization-hub/` — web dashboard, project connections, policies, review queue, and audit trail
+- `artifacts/api-server/src/routes/authorization.ts` — authorization API implementation
+- `lib/api-spec/openapi.yaml` — source of truth for the API contract
+- `lib/db/src/schema/authorization.ts` — projects, feature policies, reviews, and activity persistence
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Builder and reviewer are deliberately separate roles; a pending change cannot approve itself.
+- Human sign-off is modeled as a state transition on a review request, with every decision appended to the audit trail.
+- Project connections and feature policies are independent so one project can enforce different reviewers for different risk boundaries.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Monitor authorization posture across connected projects.
+- Connect projects and create feature-level builder/reviewer policies.
+- Review, approve, or reject AI-proposed changes.
+- Inspect a chronological audit trail of submissions and human decisions.
 
 ## User preferences
 
