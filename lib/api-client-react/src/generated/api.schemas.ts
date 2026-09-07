@@ -166,9 +166,115 @@ export interface DashboardSummary {
   approvedThisWeek: number;
   blockedChanges: number;
   reviewSlaHours: number;
+  pendingManagementActions: number;
   /** @nullable */
   latestReview: Review | null;
   activity: Activity[];
+}
+
+export type ManagementActionActionType = typeof ManagementActionActionType[keyof typeof ManagementActionActionType];
+
+
+export const ManagementActionActionType = {
+  create_task: 'create_task',
+  update_priority: 'update_priority',
+  reassign_owner: 'reassign_owner',
+  change_deadline: 'change_deadline',
+  close_task: 'close_task',
+  create_milestone: 'create_milestone',
+  update_scope: 'update_scope',
+} as const;
+
+export type ManagementActionStatus = typeof ManagementActionStatus[keyof typeof ManagementActionStatus];
+
+
+export const ManagementActionStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export type ManagementActionPriority = typeof ManagementActionPriority[keyof typeof ManagementActionPriority];
+
+
+export const ManagementActionPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  urgent: 'urgent',
+} as const;
+
+export interface ManagementAction {
+  id: string;
+  projectId: string;
+  projectName: string;
+  actionType: ManagementActionActionType;
+  target: string;
+  description: string;
+  requestedBy: string;
+  approver: string;
+  status: ManagementActionStatus;
+  priority: ManagementActionPriority;
+  /** @nullable */
+  dueDate: string | null;
+  submittedAt: string;
+  /** @nullable */
+  decidedAt: string | null;
+  /** @nullable */
+  decisionNote: string | null;
+}
+
+export type ManagementActionInputActionType = typeof ManagementActionInputActionType[keyof typeof ManagementActionInputActionType];
+
+
+export const ManagementActionInputActionType = {
+  create_task: 'create_task',
+  update_priority: 'update_priority',
+  reassign_owner: 'reassign_owner',
+  change_deadline: 'change_deadline',
+  close_task: 'close_task',
+  create_milestone: 'create_milestone',
+  update_scope: 'update_scope',
+} as const;
+
+export type ManagementActionInputPriority = typeof ManagementActionInputPriority[keyof typeof ManagementActionInputPriority];
+
+
+export const ManagementActionInputPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  urgent: 'urgent',
+} as const;
+
+export interface ManagementActionInput {
+  projectId: string;
+  actionType: ManagementActionInputActionType;
+  /** @minLength 1 */
+  target: string;
+  /** @minLength 1 */
+  description: string;
+  /** @minLength 1 */
+  requestedBy: string;
+  /** @minLength 1 */
+  approver: string;
+  priority: ManagementActionInputPriority;
+  /** @nullable */
+  dueDate?: string | null;
+}
+
+export type ManagementActionDecisionDecision = typeof ManagementActionDecisionDecision[keyof typeof ManagementActionDecisionDecision];
+
+
+export const ManagementActionDecisionDecision = {
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface ManagementActionDecision {
+  decision: ManagementActionDecisionDecision;
+  /** @maxLength 500 */
+  note?: string;
 }
 
 /**
@@ -203,4 +309,18 @@ export type ListActivityParams = {
  */
 limit?: number;
 };
+
+export type ListManagementActionsParams = {
+status?: ListManagementActionsStatus;
+projectId?: string;
+};
+
+export type ListManagementActionsStatus = typeof ListManagementActionsStatus[keyof typeof ListManagementActionsStatus];
+
+
+export const ListManagementActionsStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
 

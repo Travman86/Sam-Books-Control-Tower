@@ -27,6 +27,7 @@ export const GetDashboardResponse = zod.object({
   "approvedThisWeek": zod.number().int(),
   "blockedChanges": zod.number().int(),
   "reviewSlaHours": zod.number(),
+  "pendingManagementActions": zod.number().int(),
   "latestReview": zod.object({
   "id": zod.string(),
   "featureId": zod.string(),
@@ -301,5 +302,129 @@ export const ListActivityResponseItem = zod.object({
   "occurredAt": zod.coerce.date()
 })
 export const ListActivityResponse = zod.array(ListActivityResponseItem)
+
+
+/**
+ * @summary List proposed project management actions
+ */
+export const ListManagementActionsQueryParams = zod.object({
+  "status": zod.enum(['pending', 'approved', 'rejected']).optional(),
+  "projectId": zod.coerce.string().optional()
+})
+
+export const ListManagementActionsResponseItem = zod.object({
+  "id": zod.string(),
+  "projectId": zod.string(),
+  "projectName": zod.string(),
+  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "target": zod.string(),
+  "description": zod.string(),
+  "requestedBy": zod.string(),
+  "approver": zod.string(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "dueDate": zod.coerce.date().nullable(),
+  "submittedAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullable(),
+  "decisionNote": zod.string().nullable()
+})
+export const ListManagementActionsResponse = zod.array(ListManagementActionsResponseItem)
+
+
+/**
+ * @summary Propose a project management action for approval
+ */
+
+
+
+
+
+
+export const CreateManagementActionBody = zod.object({
+  "projectId": zod.string(),
+  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "target": zod.string().min(1),
+  "description": zod.string().min(1),
+  "requestedBy": zod.string().min(1),
+  "approver": zod.string().min(1),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "dueDate": zod.coerce.date().nullish()
+})
+
+export const CreateManagementActionResponse = zod.object({
+  "id": zod.string(),
+  "projectId": zod.string(),
+  "projectName": zod.string(),
+  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "target": zod.string(),
+  "description": zod.string(),
+  "requestedBy": zod.string(),
+  "approver": zod.string(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "dueDate": zod.coerce.date().nullable(),
+  "submittedAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullable(),
+  "decisionNote": zod.string().nullable()
+})
+
+
+/**
+ * @summary Get a project management action
+ */
+export const GetManagementActionParams = zod.object({
+  "actionId": zod.coerce.string()
+})
+
+export const GetManagementActionResponse = zod.object({
+  "id": zod.string(),
+  "projectId": zod.string(),
+  "projectName": zod.string(),
+  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "target": zod.string(),
+  "description": zod.string(),
+  "requestedBy": zod.string(),
+  "approver": zod.string(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "dueDate": zod.coerce.date().nullable(),
+  "submittedAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullable(),
+  "decisionNote": zod.string().nullable()
+})
+
+
+/**
+ * @summary Approve or reject a project management action
+ */
+export const DecideManagementActionParams = zod.object({
+  "actionId": zod.coerce.string()
+})
+
+export const decideManagementActionBodyNoteMax = 500;
+
+
+
+export const DecideManagementActionBody = zod.object({
+  "decision": zod.enum(['approved', 'rejected']),
+  "note": zod.string().max(decideManagementActionBodyNoteMax).optional()
+})
+
+export const DecideManagementActionResponse = zod.object({
+  "id": zod.string(),
+  "projectId": zod.string(),
+  "projectName": zod.string(),
+  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "target": zod.string(),
+  "description": zod.string(),
+  "requestedBy": zod.string(),
+  "approver": zod.string(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "dueDate": zod.coerce.date().nullable(),
+  "submittedAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullable(),
+  "decisionNote": zod.string().nullable()
+})
 
 

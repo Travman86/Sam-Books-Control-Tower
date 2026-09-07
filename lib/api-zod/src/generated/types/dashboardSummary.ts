@@ -15,6 +15,7 @@ export interface DashboardSummary {
   approvedThisWeek: number;
   blockedChanges: number;
   reviewSlaHours: number;
+  pendingManagementActions: number;
   /** @nullable */
   latestReview: Review | null;
   activity: Activity[];

@@ -4,26 +4,36 @@ import {
   activityTable,
   db,
   featuresTable,
+  managementActionsTable,
   projectsTable,
   reviewsTable,
 } from "@workspace/db";
 import {
   CreateFeatureBody,
   CreateFeatureResponse,
+  CreateManagementActionBody,
+  CreateManagementActionResponse,
   CreateProjectBody,
   CreateProjectResponse,
   DecideReviewBody,
   DecideReviewParams,
   DecideReviewResponse,
+  DecideManagementActionBody,
+  DecideManagementActionParams,
+  DecideManagementActionResponse,
   GetDashboardResponse,
   GetProjectParams,
   GetProjectResponse,
+  GetManagementActionParams,
+  GetManagementActionResponse,
   GetReviewParams,
   GetReviewResponse,
   ListActivityQueryParams,
   ListActivityResponse,
   ListFeaturesQueryParams,
   ListFeaturesResponse,
+  ListManagementActionsQueryParams,
+  ListManagementActionsResponse,
   ListProjectsResponse,
   ListReviewsQueryParams,
   ListReviewsResponse,
@@ -75,17 +85,49 @@ async function reviewViews(status?: string) {
   });
 }
 
+async function managementActionViews(status?: string, projectId?: string) {
+  const filters = [
+    status ? eq(managementActionsTable.status, status) : undefined,
+    projectId ? eq(managementActionsTable.projectId, projectId) : undefined,
+  ].filter(
+    (
+      filter,
+    ): filter is Exclude<typeof filter, undefined> => filter !== undefined,
+  );
+  const actions =
+    filters.length > 0
+      ? await db
+          .select()
+          .from(managementActionsTable)
+          .where(filters.length === 1 ? filters[0] : and(...filters))
+          .orderBy(desc(managementActionsTable.submittedAt))
+      : await db
+          .select()
+          .from(managementActionsTable)
+          .orderBy(desc(managementActionsTable.submittedAt));
+  const projects = await db.select().from(projectsTable);
+
+  return actions.map((action) => ({
+    ...action,
+    projectName:
+      projects.find((project) => project.id === action.projectId)?.name ??
+      "Unknown project",
+  }));
+}
+
 router.get("/dashboard", async (_req, res): Promise<void> => {
-  const [projects, features, reviews, activity] = await Promise.all([
+  const [projects, features, reviews, managementActions, activity] =
+    await Promise.all([
     db.select().from(projectsTable),
     db.select().from(featuresTable),
     db.select().from(reviewsTable),
+    db.select().from(managementActionsTable),
     db
       .select()
       .from(activityTable)
       .orderBy(desc(activityTable.occurredAt))
       .limit(6),
-  ]);
+    ]);
   const allReviews = await reviewViews();
   const latestReview =
     allReviews.find((review) => review.status === "pending") ?? null;
@@ -121,6 +163,9 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
       blockedChanges: reviews.filter((review) => review.status === "rejected")
         .length,
       reviewSlaHours: Math.round(averageHours * 10) / 10,
+      pendingManagementActions: managementActions.filter(
+        (action) => action.status === "pending",
+      ).length,
       latestReview,
       activity,
     }),
@@ -337,6 +382,120 @@ router.patch("/reviews/:reviewId", async (req, res): Promise<void> => {
   });
   res.json(DecideReviewResponse.parse(view));
 });
+
+router.get("/management-actions", async (req, res): Promise<void> => {
+  const parsed = ListManagementActionsQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  res.json(
+    ListManagementActionsResponse.parse(
+      await managementActionViews(
+        parsed.data.status,
+        parsed.data.projectId,
+      ),
+    ),
+  );
+});
+
+router.post("/management-actions", async (req, res): Promise<void> => {
+  const parsed = CreateManagementActionBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [project] = await db
+    .select()
+    .from(projectsTable)
+    .where(eq(projectsTable.id, parsed.data.projectId));
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+  const [action] = await db
+    .insert(managementActionsTable)
+    .values({
+      ...parsed.data,
+      dueDate: parsed.data.dueDate
+        ? parsed.data.dueDate.toISOString().slice(0, 10)
+        : null,
+      status: "pending",
+    })
+    .returning();
+  await db.insert(activityTable).values({
+    kind: "submitted",
+    title: `${action.target} proposed`,
+    detail: `Project management action ${action.actionType.replaceAll("_", " ")} is awaiting ${action.approver}.`,
+    actor: action.requestedBy,
+  });
+  res.status(201).json(
+    CreateManagementActionResponse.parse({
+      ...action,
+      projectName: project.name,
+    }),
+  );
+});
+
+router.get("/management-actions/:actionId", async (req, res): Promise<void> => {
+  const parsed = GetManagementActionParams.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const actions = await managementActionViews();
+  const action = actions.find((item) => item.id === parsed.data.actionId);
+  if (!action) {
+    res.status(404).json({ error: "Project management action not found" });
+    return;
+  }
+  res.json(GetManagementActionResponse.parse(action));
+});
+
+router.patch(
+  "/management-actions/:actionId",
+  async (req, res): Promise<void> => {
+    const params = DecideManagementActionParams.safeParse(req.params);
+    const body = DecideManagementActionBody.safeParse(req.body);
+    if (!params.success || !body.success) {
+      res
+        .status(400)
+        .json({ error: params.error?.message ?? body.error?.message });
+      return;
+    }
+    const [action] = await db
+      .update(managementActionsTable)
+      .set({
+        status: body.data.decision,
+        decisionNote: body.data.note ?? null,
+        decidedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(managementActionsTable.id, params.data.actionId),
+          eq(managementActionsTable.status, "pending"),
+        ),
+      )
+      .returning();
+    if (!action) {
+      res
+        .status(404)
+        .json({ error: "Pending project management action not found" });
+      return;
+    }
+    const views = await managementActionViews();
+    const view = views.find((item) => item.id === action.id)!;
+    await db.insert(activityTable).values({
+      kind: body.data.decision,
+      title: `${view.target} ${body.data.decision}`,
+      detail:
+        body.data.note ||
+        `Project management action reviewed for ${view.projectName}.`,
+      actor: action.approver,
+    });
+    res.json(DecideManagementActionResponse.parse(view));
+  },
+);
 
 router.get("/activity", async (req, res): Promise<void> => {
   const parsed = ListActivityQueryParams.safeParse(req.query);

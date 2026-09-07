@@ -38,6 +38,7 @@ A review-first control plane that prevents AI-generated changes from reaching co
 - Monitor authorization posture across connected projects.
 - Connect projects and create feature-level builder/reviewer policies.
 - Review, approve, or reject AI-proposed changes.
+- Propose, filter, approve, or reject project-management actions such as task creation, reprioritization, reassignment, deadline changes, milestone creation, scope updates, and task closure.
 - Inspect a chronological audit trail of submissions and human decisions.
 
 ## User preferences

@@ -10,6 +10,8 @@ import Projects from '@/pages/projects';
 import Policies from '@/pages/policies';
 import Reviews from '@/pages/reviews';
 import ReviewDetail from '@/pages/review-detail';
+import Actions from '@/pages/actions';
+import ActionDetail from '@/pages/action-detail';
 import Activity from '@/pages/activity';
 import {
   Route,
@@ -30,6 +32,8 @@ function Router() {
           <Route path="/policies" component={Policies} />
           <Route path="/reviews" component={Reviews} />
           <Route path="/reviews/:id" component={ReviewDetail} />
+          <Route path="/actions" component={Actions} />
+          <Route path="/actions/:id" component={ActionDetail} />
           <Route path="/activity" component={Activity} />
           <Route component={NotFound} />
         </Switch>

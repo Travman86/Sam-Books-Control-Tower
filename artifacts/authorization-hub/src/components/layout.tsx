@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link, useLocation } from "wouter"
-import { Shield, LayoutDashboard, FolderKanban, FileText, CheckSquare, ActivitySquare } from "lucide-react"
+import { Shield, LayoutDashboard, FolderKanban, FileText, CheckSquare, ActivitySquare, ListTodo } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -11,6 +11,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/projects", label: "Projects", icon: FolderKanban },
     { href: "/policies", label: "Policies", icon: FileText },
     { href: "/reviews", label: "Reviews", icon: CheckSquare },
+    { href: "/actions", label: "Actions", icon: ListTodo },
     { href: "/activity", label: "Activity", icon: ActivitySquare },
   ]
 

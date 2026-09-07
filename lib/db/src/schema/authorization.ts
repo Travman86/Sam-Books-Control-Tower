@@ -67,3 +67,26 @@ export const activityTable = pgTable("authorization_activity", {
     .notNull()
     .defaultNow(),
 });
+
+export const managementActionsTable = pgTable(
+  "authorization_management_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projectsTable.id, { onDelete: "cascade" }),
+    actionType: text("action_type").notNull(),
+    target: text("target").notNull(),
+    description: text("description").notNull(),
+    requestedBy: text("requested_by").notNull(),
+    approver: text("approver").notNull(),
+    status: text("status").notNull().default("pending"),
+    priority: text("priority").notNull().default("medium"),
+    dueDate: text("due_date"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionNote: text("decision_note"),
+  },
+);

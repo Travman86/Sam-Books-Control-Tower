@@ -27,7 +27,11 @@ import type {
   HealthStatus,
   ListActivityParams,
   ListFeaturesParams,
+  ListManagementActionsParams,
   ListReviewsParams,
+  ManagementAction,
+  ManagementActionDecision,
+  ManagementActionInput,
   NotFoundResponse,
   Project,
   ProjectInput,
@@ -984,4 +988,308 @@ export function useListActivity<TData = Awaited<ReturnType<typeof listActivity>>
 
 
 
+
+export const getListManagementActionsUrl = (params?: ListManagementActionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/management-actions?${stringifiedParams}` : `/api/management-actions`
+}
+
+/**
+ * @summary List proposed project management actions
+ */
+export const listManagementActions = async (params?: ListManagementActionsParams, options?: Parameters<typeof customFetch>[1]): Promise<ManagementAction[]> => {
+
+  return customFetch<ManagementAction[]>(getListManagementActionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListManagementActionsQueryKey = (params?: ListManagementActionsParams,) => {
+    return [
+    `/api/management-actions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListManagementActionsQueryOptions = <TData = Awaited<ReturnType<typeof listManagementActions>>, TError = ErrorType<unknown>>(params?: ListManagementActionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listManagementActions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListManagementActionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listManagementActions>>> = ({ signal }) => listManagementActions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listManagementActions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListManagementActionsQueryResult = NonNullable<Awaited<ReturnType<typeof listManagementActions>>>
+export type ListManagementActionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List proposed project management actions
+ */
+
+export function useListManagementActions<TData = Awaited<ReturnType<typeof listManagementActions>>, TError = ErrorType<unknown>>(
+ params?: ListManagementActionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listManagementActions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListManagementActionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateManagementActionUrl = () => {
+
+
+
+
+  return `/api/management-actions`
+}
+
+/**
+ * @summary Propose a project management action for approval
+ */
+export const createManagementAction = async (managementActionInput: ManagementActionInput, options?: Parameters<typeof customFetch>[1]): Promise<ManagementAction> => {
+
+  return customFetch<ManagementAction>(getCreateManagementActionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(managementActionInput)
+  }
+);}
+
+
+
+
+
+export const getCreateManagementActionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createManagementAction>>, TError,{data: BodyType<ManagementActionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createManagementAction>>, TError,{data: BodyType<ManagementActionInput>}, TContext> => {
+
+const mutationKey = ['createManagementAction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createManagementAction>>, {data: BodyType<ManagementActionInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createManagementAction(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateManagementActionMutationResult = NonNullable<Awaited<ReturnType<typeof createManagementAction>>>
+    export type CreateManagementActionMutationBody = BodyType<ManagementActionInput>
+    export type CreateManagementActionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Propose a project management action for approval
+ */
+export const useCreateManagementAction = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createManagementAction>>, TError,{data: BodyType<ManagementActionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createManagementAction>>,
+        TError,
+        {data: BodyType<ManagementActionInput>},
+        TContext
+      > => {
+      return useMutation(getCreateManagementActionMutationOptions(options));
+    }
+
+export const getGetManagementActionUrl = (actionId: string,) => {
+
+
+
+
+  return `/api/management-actions/${actionId}`
+}
+
+/**
+ * @summary Get a project management action
+ */
+export const getManagementAction = async (actionId: string, options?: Parameters<typeof customFetch>[1]): Promise<ManagementAction> => {
+
+  return customFetch<ManagementAction>(getGetManagementActionUrl(actionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetManagementActionQueryKey = (actionId: string,) => {
+    return [
+    `/api/management-actions/${actionId}`
+    ] as const;
+    }
+
+
+export const getGetManagementActionQueryOptions = <TData = Awaited<ReturnType<typeof getManagementAction>>, TError = ErrorType<unknown>>(actionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getManagementAction>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetManagementActionQueryKey(actionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getManagementAction>>> = ({ signal }) => getManagementAction(actionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: actionId !== null && actionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getManagementAction>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetManagementActionQueryResult = NonNullable<Awaited<ReturnType<typeof getManagementAction>>>
+export type GetManagementActionQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a project management action
+ */
+
+export function useGetManagementAction<TData = Awaited<ReturnType<typeof getManagementAction>>, TError = ErrorType<unknown>>(
+ actionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getManagementAction>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetManagementActionQueryOptions(actionId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDecideManagementActionUrl = (actionId: string,) => {
+
+
+
+
+  return `/api/management-actions/${actionId}`
+}
+
+/**
+ * @summary Approve or reject a project management action
+ */
+export const decideManagementAction = async (actionId: string,
+    managementActionDecision: ManagementActionDecision, options?: Parameters<typeof customFetch>[1]): Promise<ManagementAction> => {
+
+  return customFetch<ManagementAction>(getDecideManagementActionUrl(actionId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(managementActionDecision)
+  }
+);}
+
+
+
+
+
+export const getDecideManagementActionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideManagementAction>>, TError,{actionId: string;data: BodyType<ManagementActionDecision>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof decideManagementAction>>, TError,{actionId: string;data: BodyType<ManagementActionDecision>}, TContext> => {
+
+const mutationKey = ['decideManagementAction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof decideManagementAction>>, {actionId: string;data: BodyType<ManagementActionDecision>}> = (props) => {
+          const {actionId,data} = props ?? {};
+
+          return  decideManagementAction(actionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DecideManagementActionMutationResult = NonNullable<Awaited<ReturnType<typeof decideManagementAction>>>
+    export type DecideManagementActionMutationBody = BodyType<ManagementActionDecision>
+    export type DecideManagementActionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve or reject a project management action
+ */
+export const useDecideManagementAction = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideManagementAction>>, TError,{actionId: string;data: BodyType<ManagementActionDecision>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof decideManagementAction>>,
+        TError,
+        {actionId: string;data: BodyType<ManagementActionDecision>},
+        TContext
+      > => {
+      return useMutation(getDecideManagementActionMutationOptions(options));
+    }
 

@@ -20,6 +20,8 @@ tags:
     description: Human review queue and sign-offs
   - name: activity
     description: Audit trail
+  - name: management
+    description: Project management actions requiring authorization
 paths:
   /healthz:
     get:
@@ -219,6 +221,80 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Activity"
+  /management-actions:
+    get:
+      operationId: listManagementActions
+      tags: [management]
+      summary: List proposed project management actions
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+        - in: query
+          name: projectId
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Project management actions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ManagementAction"
+    post:
+      operationId: createManagementAction
+      tags: [management]
+      summary: Propose a project management action for approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManagementActionInput"
+      responses:
+        "201":
+          description: Proposed project management action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagementAction"
+  /management-actions/{actionId}:
+    get:
+      operationId: getManagementAction
+      tags: [management]
+      summary: Get a project management action
+      parameters:
+        - $ref: "#/components/parameters/ActionId"
+      responses:
+        "200":
+          description: Project management action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagementAction"
+    patch:
+      operationId: decideManagementAction
+      tags: [management]
+      summary: Approve or reject a project management action
+      parameters:
+        - $ref: "#/components/parameters/ActionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManagementActionDecision"
+      responses:
+        "200":
+          description: Decided project management action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagementAction"
 components:
   parameters:
     ProjectId:
@@ -230,6 +306,12 @@ components:
     ReviewId:
       in: path
       name: reviewId
+      required: true
+      schema:
+        type: string
+    ActionId:
+      in: path
+      name: actionId
       required: true
       schema:
         type: string
@@ -344,6 +426,7 @@ components:
         approvedThisWeek: { type: integer }
         blockedChanges: { type: integer }
         reviewSlaHours: { type: number }
+        pendingManagementActions: { type: integer }
         latestReview:
           type: ["object", "null"]
           $ref: "#/components/schemas/Review"
@@ -351,5 +434,57 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Activity"
-      required: [pendingReviews, connectedProjects, protectedFeatures, approvedThisWeek, blockedChanges, reviewSlaHours, latestReview, activity]
+      required: [pendingReviews, connectedProjects, protectedFeatures, approvedThisWeek, blockedChanges, reviewSlaHours, pendingManagementActions, latestReview, activity]
+    ManagementAction:
+      type: object
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        projectName: { type: string }
+        actionType:
+          type: string
+          enum: [create_task, update_priority, reassign_owner, change_deadline, close_task, create_milestone, update_scope]
+        target: { type: string }
+        description: { type: string }
+        requestedBy: { type: string }
+        approver: { type: string }
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        dueDate:
+          type: ["string", "null"]
+          format: date
+        submittedAt: { type: string, format: date-time }
+        decidedAt: { type: ["string", "null"], format: date-time }
+        decisionNote: { type: ["string", "null"] }
+      required: [id, projectId, projectName, actionType, target, description, requestedBy, approver, status, priority, dueDate, submittedAt, decidedAt, decisionNote]
+    ManagementActionInput:
+      type: object
+      properties:
+        projectId: { type: string }
+        actionType:
+          type: string
+          enum: [create_task, update_priority, reassign_owner, change_deadline, close_task, create_milestone, update_scope]
+        target: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        requestedBy: { type: string, minLength: 1 }
+        approver: { type: string, minLength: 1 }
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        dueDate:
+          type: ["string", "null"]
+          format: date
+      required: [projectId, actionType, target, description, requestedBy, approver, priority]
+    ManagementActionDecision:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected]
+        note: { type: string, maxLength: 500 }
+      required: [decision]
 

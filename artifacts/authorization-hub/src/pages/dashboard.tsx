@@ -4,7 +4,7 @@ import { useGetDashboard } from "@workspace/api-client-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, ShieldCheck, Clock, ShieldAlert, AlertTriangle, FolderKanban } from "lucide-react"
+import { ArrowRight, ShieldCheck, Clock, ShieldAlert, AlertTriangle, FolderKanban, ListTodo } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 
 export default function Dashboard() {
@@ -25,7 +25,7 @@ export default function Dashboard() {
         <p className="text-muted-foreground mt-2">Overview of your authorization posture and current workflow.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
@@ -33,7 +33,17 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboard.pendingReviews}</div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting human sign-off</p>
+            <p className="text-xs text-muted-foreground mt-1">Code changes</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Actions</CardTitle>
+            <ListTodo className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboard.pendingManagementActions}</div>
+            <p className="text-xs text-muted-foreground mt-1">Project decisions</p>
           </CardContent>
         </Card>
         <Card>
@@ -43,37 +53,37 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboard.protectedFeatures}</div>
-            <p className="text-xs text-muted-foreground mt-1">With active policies</p>
+            <p className="text-xs text-muted-foreground mt-1">Active policies</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved This Week</CardTitle>
+            <CardTitle className="text-sm font-medium">Approved Weekly</CardTitle>
             <ShieldCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboard.approvedThisWeek}</div>
-            <p className="text-xs text-muted-foreground mt-1">Changes authorized</p>
+            <p className="text-xs text-muted-foreground mt-1">Authorized</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Blocked Changes</CardTitle>
+            <CardTitle className="text-sm font-medium">Blocked Weekly</CardTitle>
             <ShieldAlert className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboard.blockedChanges}</div>
-            <p className="text-xs text-muted-foreground mt-1">Rejected by reviewers</p>
+            <p className="text-xs text-muted-foreground mt-1">Rejected requests</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-12 mt-4">
+        <Card className="lg:col-span-5">
           <CardHeader>
-            <CardTitle>Needs Attention</CardTitle>
+            <CardTitle>Needs Attention (Code)</CardTitle>
             <CardDescription>
-              The most recent change request awaiting your review.
+              The most recent code change request awaiting your review.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -103,15 +113,37 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <ShieldCheck className="h-10 w-10 text-muted-foreground mb-4" />
+              <div className="flex flex-col items-center justify-center py-8 text-center h-[180px]">
+                <ShieldCheck className="h-10 w-10 text-muted-foreground mb-4 opacity-50" />
                 <h3 className="font-medium text-lg">All caught up</h3>
-                <p className="text-sm text-muted-foreground max-w-sm mt-1">There are no pending reviews requiring your attention right now.</p>
+                <p className="text-sm text-muted-foreground max-w-sm mt-1">No pending code reviews.</p>
               </div>
             )}
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+
+        <Card className="lg:col-span-3 bg-primary/5 border-primary/20">
+          <CardHeader>
+            <CardTitle>Management Actions</CardTitle>
+            <CardDescription>Project operations proposed by AI agents.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col h-full justify-between pb-6">
+            <div className="flex flex-col items-center text-center py-4">
+              <div className="bg-background p-3 rounded-full mb-3 shadow-sm border border-primary/20">
+                <ListTodo className="h-8 w-8 text-primary" />
+              </div>
+              <div className="text-3xl font-bold">{dashboard.pendingManagementActions}</div>
+              <p className="text-sm text-muted-foreground mt-1">Pending approval</p>
+            </div>
+            <Button asChild className="w-full mt-4" variant={dashboard.pendingManagementActions > 0 ? "default" : "outline"}>
+              <Link href="/actions">
+                Open Action Queue <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>
