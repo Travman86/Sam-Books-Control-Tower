@@ -13,6 +13,7 @@ import ReviewDetail from '@/pages/review-detail';
 import Actions from '@/pages/actions';
 import ActionDetail from '@/pages/action-detail';
 import Activity from '@/pages/activity';
+import SamBooks from '@/pages/sam-books';
 import {
   Route,
   Switch,
@@ -35,6 +36,7 @@ function Router() {
           <Route path="/actions" component={Actions} />
           <Route path="/actions/:id" component={ActionDetail} />
           <Route path="/activity" component={Activity} />
+          <Route path="/sam-books" component={SamBooks} />
           <Route component={NotFound} />
         </Switch>
       </RoutedErrorBoundary>

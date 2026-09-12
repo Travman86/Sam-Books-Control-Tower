@@ -277,10 +277,218 @@ export interface ManagementActionDecision {
   note?: string;
 }
 
+export type SamBooksOverviewTotals = {
+  organizations: number;
+  users: number;
+  platformAdmins: number;
+  modules: number;
+  activeSubscriptions: number;
+};
+
+export type SamBooksOverviewOrganizationsItemStatus = typeof SamBooksOverviewOrganizationsItemStatus[keyof typeof SamBooksOverviewOrganizationsItemStatus];
+
+
+export const SamBooksOverviewOrganizationsItemStatus = {
+  active: 'active',
+  suspended: 'suspended',
+} as const;
+
+export type SamBooksOverviewOrganizationsItem = {
+  id: number;
+  name: string;
+  status: SamBooksOverviewOrganizationsItemStatus;
+  createdAt: string;
+  subscriptionStatus: string;
+  subscriptionHealthy: boolean;
+  /** @nullable */
+  currentPeriodEnd: string | null;
+  memberCount: number;
+  transactionCount: number;
+  moduleCount: number;
+};
+
+export type SamBooksOverviewQueuesItemName = typeof SamBooksOverviewQueuesItemName[keyof typeof SamBooksOverviewQueuesItemName];
+
+
+export const SamBooksOverviewQueuesItemName = {
+  ingest: 'ingest',
+  whatsappAgent: 'whatsappAgent',
+} as const;
+
+export type SamBooksOverviewQueuesItem = {
+  name: SamBooksOverviewQueuesItemName;
+  pending: number;
+  processing: number;
+  failed24h: number;
+  done24h: number;
+  /** @nullable */
+  oldestPendingAgeSeconds: number | null;
+};
+
+export type SamBooksOverviewRecentFailuresItemKind = typeof SamBooksOverviewRecentFailuresItemKind[keyof typeof SamBooksOverviewRecentFailuresItemKind];
+
+
+export const SamBooksOverviewRecentFailuresItemKind = {
+  ingest: 'ingest',
+  whatsappAgent: 'whatsappAgent',
+} as const;
+
+export type SamBooksOverviewRecentFailuresItem = {
+  kind: SamBooksOverviewRecentFailuresItemKind;
+  id: number;
+  /** @nullable */
+  organizationId: number | null;
+  /** @nullable */
+  organizationName: string | null;
+  detail: string;
+  /** @nullable */
+  error: string | null;
+  at: string;
+};
+
+export interface SamBooksOverview {
+  totals: SamBooksOverviewTotals;
+  organizations: SamBooksOverviewOrganizationsItem[];
+  queues: SamBooksOverviewQueuesItem[];
+  recentFailures: SamBooksOverviewRecentFailuresItem[];
+}
+
+/**
+ * @nullable
+ */
+export type SamBooksProjectLatestRun = {
+  status: string;
+  changeScope: string;
+  /** @nullable */
+  summary: string | null;
+  /** @nullable */
+  error: string | null;
+  createdAt: string;
+  /** @nullable */
+  completedAt: string | null;
+} | null;
+
+export interface SamBooksProject {
+  id: number;
+  name: string;
+  organizationId: number;
+  organizationName: string;
+  currentRevision: number;
+  createdAt: string;
+  published: boolean;
+  openRequests: number;
+  awaitingApproval: number;
+  /** @nullable */
+  latestRun: SamBooksProjectLatestRun;
+}
+
+export type SamBooksFeatureRequestRequester = {
+  id: number;
+  name: string;
+};
+
+export interface SamBooksFeatureRequest {
+  id: number;
+  title: string;
+  problem: string;
+  outcome: string;
+  requirementCount: number;
+  status: string;
+  changeScope: string;
+  requester: SamBooksFeatureRequestRequester;
+  organizationId: number;
+  organizationName: string;
+  moduleId: number;
+  moduleName: string;
+  /** @nullable */
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SamBooksAgentRun {
+  id: number;
+  organizationId: number;
+  organizationName: string;
+  moduleId: number;
+  moduleName: string;
+  /** @nullable */
+  requestId: number | null;
+  status: string;
+  changeScope: string;
+  prompt: string;
+  /** @nullable */
+  summary: string | null;
+  /** @nullable */
+  error: string | null;
+  /** @nullable */
+  createdBy: string | null;
+  createdAt: string;
+  /** @nullable */
+  startedAt: string | null;
+  /** @nullable */
+  completedAt: string | null;
+  checksPassed: number;
+  checksTotal: number;
+  /** @nullable */
+  durationSeconds: number | null;
+}
+
+export interface SamBooksQueueWindow {
+  done: number;
+  failed: number;
+  retried: number;
+  /** @nullable */
+  successRate: number | null;
+  /** @nullable */
+  avgSeconds: number | null;
+  /** @nullable */
+  p95Seconds: number | null;
+}
+
+export interface SamBooksQueueMetric {
+  pending: number;
+  processing: number;
+  last7d: SamBooksQueueWindow;
+  last30d: SamBooksQueueWindow;
+}
+
+export type SamBooksMetricsPdfParsing = {
+  correctionsLast7d: number;
+  correctionsLast30d: number;
+};
+
+export type SamBooksMetricsFinanceAgentUsage = {
+  activeConversations7d: number;
+  assistantMessages7d: number;
+  toolCallingTurns7d: number;
+  whatsappThreads: number;
+};
+
+export type SamBooksMetricsGrowth = {
+  newOrganizations30d: number;
+  newUsers30d: number;
+  transactions30d: number;
+};
+
+export interface SamBooksMetrics {
+  generatedAt: string;
+  statementIngest: SamBooksQueueMetric;
+  whatsappAgent: SamBooksQueueMetric;
+  pdfParsing: SamBooksMetricsPdfParsing;
+  financeAgentUsage: SamBooksMetricsFinanceAgentUsage;
+  growth: SamBooksMetricsGrowth;
+}
+
 /**
  * Resource not found
  */
 export type NotFoundResponse = Error;
+
+/**
+ * The connected Sam Books instance could not be reached or is not configured
+ */
+export type UpstreamUnavailableResponse = Error;
 
 export type ListFeaturesParams = {
 /**
@@ -323,4 +531,12 @@ export const ListManagementActionsStatus = {
   approved: 'approved',
   rejected: 'rejected',
 } as const;
+
+export type ListSamBooksFeatureRequestsParams = {
+status?: string;
+};
+
+export type ListSamBooksAgentRunsParams = {
+status?: string;
+};
 
