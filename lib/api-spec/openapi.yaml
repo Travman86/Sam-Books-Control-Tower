@@ -22,6 +22,8 @@ tags:
     description: Audit trail
   - name: management
     description: Project management actions requiring authorization
+  - name: sam-books
+    description: Read-only proxy into the connected Sam Books instance's own Control Tower API
 paths:
   /healthz:
     get:
@@ -295,6 +297,94 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ManagementAction"
+  /sam-books/overview:
+    get:
+      operationId: getSamBooksOverview
+      tags: [sam-books]
+      summary: Sam Books platform overview
+      responses:
+        "200":
+          description: Sam Books overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamBooksOverview"
+        "502":
+          $ref: "#/components/responses/UpstreamUnavailable"
+  /sam-books/projects:
+    get:
+      operationId: listSamBooksProjects
+      tags: [sam-books]
+      summary: Sam Books custom modules across every organization
+      responses:
+        "200":
+          description: Sam Books projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SamBooksProject"
+        "502":
+          $ref: "#/components/responses/UpstreamUnavailable"
+  /sam-books/feature-requests:
+    get:
+      operationId: listSamBooksFeatureRequests
+      tags: [sam-books]
+      summary: Sam Books feature-request approval queue
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            default: submitted
+      responses:
+        "200":
+          description: Sam Books feature requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SamBooksFeatureRequest"
+        "502":
+          $ref: "#/components/responses/UpstreamUnavailable"
+  /sam-books/agent-runs:
+    get:
+      operationId: listSamBooksAgentRuns
+      tags: [sam-books]
+      summary: Sam Books module-builder agent runs
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            default: all
+      responses:
+        "200":
+          description: Sam Books agent runs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SamBooksAgentRun"
+        "502":
+          $ref: "#/components/responses/UpstreamUnavailable"
+  /sam-books/metrics:
+    get:
+      operationId: getSamBooksMetrics
+      tags: [sam-books]
+      summary: Sam Books performance KPIs
+      responses:
+        "200":
+          description: Sam Books metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamBooksMetrics"
+        "502":
+          $ref: "#/components/responses/UpstreamUnavailable"
 components:
   parameters:
     ProjectId:
@@ -318,6 +408,12 @@ components:
   responses:
     NotFound:
       description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UpstreamUnavailable:
+      description: The connected Sam Books instance could not be reached or is not configured
       content:
         application/json:
           schema:
@@ -487,4 +583,173 @@ components:
           enum: [approved, rejected]
         note: { type: string, maxLength: 500 }
       required: [decision]
+    SamBooksOverview:
+      type: object
+      properties:
+        totals:
+          type: object
+          properties:
+            organizations: { type: integer }
+            users: { type: integer }
+            platformAdmins: { type: integer }
+            modules: { type: integer }
+            activeSubscriptions: { type: integer }
+          required: [organizations, users, platformAdmins, modules, activeSubscriptions]
+        organizations:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              name: { type: string }
+              status: { type: string, enum: [active, suspended] }
+              createdAt: { type: string, format: date-time }
+              subscriptionStatus: { type: string }
+              subscriptionHealthy: { type: boolean }
+              currentPeriodEnd: { type: ["string", "null"], format: date-time }
+              memberCount: { type: integer }
+              transactionCount: { type: integer }
+              moduleCount: { type: integer }
+            required: [id, name, status, createdAt, subscriptionStatus, subscriptionHealthy, currentPeriodEnd, memberCount, transactionCount, moduleCount]
+        queues:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string, enum: [ingest, whatsappAgent] }
+              pending: { type: integer }
+              processing: { type: integer }
+              failed24h: { type: integer }
+              done24h: { type: integer }
+              oldestPendingAgeSeconds: { type: ["integer", "null"] }
+            required: [name, pending, processing, failed24h, done24h, oldestPendingAgeSeconds]
+        recentFailures:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: { type: string, enum: [ingest, whatsappAgent] }
+              id: { type: integer }
+              organizationId: { type: ["integer", "null"] }
+              organizationName: { type: ["string", "null"] }
+              detail: { type: string }
+              error: { type: ["string", "null"] }
+              at: { type: string, format: date-time }
+            required: [kind, id, organizationId, organizationName, detail, error, at]
+      required: [totals, organizations, queues, recentFailures]
+    SamBooksProject:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        organizationId: { type: integer }
+        organizationName: { type: string }
+        currentRevision: { type: integer }
+        createdAt: { type: string, format: date-time }
+        published: { type: boolean }
+        openRequests: { type: integer }
+        awaitingApproval: { type: integer }
+        latestRun:
+          type: ["object", "null"]
+          properties:
+            status: { type: string }
+            changeScope: { type: string }
+            summary: { type: ["string", "null"] }
+            error: { type: ["string", "null"] }
+            createdAt: { type: string, format: date-time }
+            completedAt: { type: ["string", "null"], format: date-time }
+          required: [status, changeScope, summary, error, createdAt, completedAt]
+      required: [id, name, organizationId, organizationName, currentRevision, createdAt, published, openRequests, awaitingApproval, latestRun]
+    SamBooksFeatureRequest:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        problem: { type: string }
+        outcome: { type: string }
+        requirementCount: { type: integer }
+        status: { type: string }
+        changeScope: { type: string }
+        requester:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+          required: [id, name]
+        organizationId: { type: integer }
+        organizationName: { type: string }
+        moduleId: { type: integer }
+        moduleName: { type: string }
+        submittedAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, title, problem, outcome, requirementCount, status, changeScope, requester, organizationId, organizationName, moduleId, moduleName, submittedAt, createdAt, updatedAt]
+    SamBooksAgentRun:
+      type: object
+      properties:
+        id: { type: integer }
+        organizationId: { type: integer }
+        organizationName: { type: string }
+        moduleId: { type: integer }
+        moduleName: { type: string }
+        requestId: { type: ["integer", "null"] }
+        status: { type: string }
+        changeScope: { type: string }
+        prompt: { type: string }
+        summary: { type: ["string", "null"] }
+        error: { type: ["string", "null"] }
+        createdBy: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        startedAt: { type: ["string", "null"], format: date-time }
+        completedAt: { type: ["string", "null"], format: date-time }
+        checksPassed: { type: integer }
+        checksTotal: { type: integer }
+        durationSeconds: { type: ["number", "null"] }
+      required: [id, organizationId, organizationName, moduleId, moduleName, requestId, status, changeScope, prompt, summary, error, createdBy, createdAt, startedAt, completedAt, checksPassed, checksTotal, durationSeconds]
+    SamBooksQueueWindow:
+      type: object
+      properties:
+        done: { type: integer }
+        failed: { type: integer }
+        retried: { type: integer }
+        successRate: { type: ["number", "null"] }
+        avgSeconds: { type: ["number", "null"] }
+        p95Seconds: { type: ["number", "null"] }
+      required: [done, failed, retried, successRate, avgSeconds, p95Seconds]
+    SamBooksQueueMetric:
+      type: object
+      properties:
+        pending: { type: integer }
+        processing: { type: integer }
+        last7d: { $ref: "#/components/schemas/SamBooksQueueWindow" }
+        last30d: { $ref: "#/components/schemas/SamBooksQueueWindow" }
+      required: [pending, processing, last7d, last30d]
+    SamBooksMetrics:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        statementIngest: { $ref: "#/components/schemas/SamBooksQueueMetric" }
+        whatsappAgent: { $ref: "#/components/schemas/SamBooksQueueMetric" }
+        pdfParsing:
+          type: object
+          properties:
+            correctionsLast7d: { type: integer }
+            correctionsLast30d: { type: integer }
+          required: [correctionsLast7d, correctionsLast30d]
+        financeAgentUsage:
+          type: object
+          properties:
+            activeConversations7d: { type: integer }
+            assistantMessages7d: { type: integer }
+            toolCallingTurns7d: { type: integer }
+            whatsappThreads: { type: integer }
+          required: [activeConversations7d, assistantMessages7d, toolCallingTurns7d, whatsappThreads]
+        growth:
+          type: object
+          properties:
+            newOrganizations30d: { type: integer }
+            newUsers30d: { type: integer }
+            transactions30d: { type: integer }
+          required: [newOrganizations30d, newUsers30d, transactions30d]
+      required: [generatedAt, statementIngest, whatsappAgent, pdfParsing, financeAgentUsage, growth]
 

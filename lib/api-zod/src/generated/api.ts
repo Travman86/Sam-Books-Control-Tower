@@ -428,3 +428,198 @@ export const DecideManagementActionResponse = zod.object({
 })
 
 
+/**
+ * @summary Sam Books platform overview
+ */
+export const GetSamBooksOverviewResponse = zod.object({
+  "totals": zod.object({
+  "organizations": zod.number().int(),
+  "users": zod.number().int(),
+  "platformAdmins": zod.number().int(),
+  "modules": zod.number().int(),
+  "activeSubscriptions": zod.number().int()
+}),
+  "organizations": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
+  "createdAt": zod.coerce.date(),
+  "subscriptionStatus": zod.string(),
+  "subscriptionHealthy": zod.boolean(),
+  "currentPeriodEnd": zod.coerce.date().nullable(),
+  "memberCount": zod.number().int(),
+  "transactionCount": zod.number().int(),
+  "moduleCount": zod.number().int()
+})),
+  "queues": zod.array(zod.object({
+  "name": zod.enum(['ingest', 'whatsappAgent']),
+  "pending": zod.number().int(),
+  "processing": zod.number().int(),
+  "failed24h": zod.number().int(),
+  "done24h": zod.number().int(),
+  "oldestPendingAgeSeconds": zod.number().int().nullable()
+})),
+  "recentFailures": zod.array(zod.object({
+  "kind": zod.enum(['ingest', 'whatsappAgent']),
+  "id": zod.number().int(),
+  "organizationId": zod.number().int().nullable(),
+  "organizationName": zod.string().nullable(),
+  "detail": zod.string(),
+  "error": zod.string().nullable(),
+  "at": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Sam Books custom modules across every organization
+ */
+export const ListSamBooksProjectsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "organizationId": zod.number().int(),
+  "organizationName": zod.string(),
+  "currentRevision": zod.number().int(),
+  "createdAt": zod.coerce.date(),
+  "published": zod.boolean(),
+  "openRequests": zod.number().int(),
+  "awaitingApproval": zod.number().int(),
+  "latestRun": zod.object({
+  "status": zod.string(),
+  "changeScope": zod.string(),
+  "summary": zod.string().nullable(),
+  "error": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "completedAt": zod.coerce.date().nullable()
+}).nullable()
+})
+export const ListSamBooksProjectsResponse = zod.array(ListSamBooksProjectsResponseItem)
+
+
+/**
+ * @summary Sam Books feature-request approval queue
+ */
+export const listSamBooksFeatureRequestsQueryStatusDefault = `submitted`;
+
+export const ListSamBooksFeatureRequestsQueryParams = zod.object({
+  "status": zod.coerce.string().default(listSamBooksFeatureRequestsQueryStatusDefault)
+})
+
+export const ListSamBooksFeatureRequestsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "problem": zod.string(),
+  "outcome": zod.string(),
+  "requirementCount": zod.number().int(),
+  "status": zod.string(),
+  "changeScope": zod.string(),
+  "requester": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string()
+}),
+  "organizationId": zod.number().int(),
+  "organizationName": zod.string(),
+  "moduleId": zod.number().int(),
+  "moduleName": zod.string(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListSamBooksFeatureRequestsResponse = zod.array(ListSamBooksFeatureRequestsResponseItem)
+
+
+/**
+ * @summary Sam Books module-builder agent runs
+ */
+export const listSamBooksAgentRunsQueryStatusDefault = `all`;
+
+export const ListSamBooksAgentRunsQueryParams = zod.object({
+  "status": zod.coerce.string().default(listSamBooksAgentRunsQueryStatusDefault)
+})
+
+export const ListSamBooksAgentRunsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "organizationId": zod.number().int(),
+  "organizationName": zod.string(),
+  "moduleId": zod.number().int(),
+  "moduleName": zod.string(),
+  "requestId": zod.number().int().nullable(),
+  "status": zod.string(),
+  "changeScope": zod.string(),
+  "prompt": zod.string(),
+  "summary": zod.string().nullable(),
+  "error": zod.string().nullable(),
+  "createdBy": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "startedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "checksPassed": zod.number().int(),
+  "checksTotal": zod.number().int(),
+  "durationSeconds": zod.number().nullable()
+})
+export const ListSamBooksAgentRunsResponse = zod.array(ListSamBooksAgentRunsResponseItem)
+
+
+/**
+ * @summary Sam Books performance KPIs
+ */
+export const GetSamBooksMetricsResponse = zod.object({
+  "generatedAt": zod.coerce.date(),
+  "statementIngest": zod.object({
+  "pending": zod.number().int(),
+  "processing": zod.number().int(),
+  "last7d": zod.object({
+  "done": zod.number().int(),
+  "failed": zod.number().int(),
+  "retried": zod.number().int(),
+  "successRate": zod.number().nullable(),
+  "avgSeconds": zod.number().nullable(),
+  "p95Seconds": zod.number().nullable()
+}),
+  "last30d": zod.object({
+  "done": zod.number().int(),
+  "failed": zod.number().int(),
+  "retried": zod.number().int(),
+  "successRate": zod.number().nullable(),
+  "avgSeconds": zod.number().nullable(),
+  "p95Seconds": zod.number().nullable()
+})
+}),
+  "whatsappAgent": zod.object({
+  "pending": zod.number().int(),
+  "processing": zod.number().int(),
+  "last7d": zod.object({
+  "done": zod.number().int(),
+  "failed": zod.number().int(),
+  "retried": zod.number().int(),
+  "successRate": zod.number().nullable(),
+  "avgSeconds": zod.number().nullable(),
+  "p95Seconds": zod.number().nullable()
+}),
+  "last30d": zod.object({
+  "done": zod.number().int(),
+  "failed": zod.number().int(),
+  "retried": zod.number().int(),
+  "successRate": zod.number().nullable(),
+  "avgSeconds": zod.number().nullable(),
+  "p95Seconds": zod.number().nullable()
+})
+}),
+  "pdfParsing": zod.object({
+  "correctionsLast7d": zod.number().int(),
+  "correctionsLast30d": zod.number().int()
+}),
+  "financeAgentUsage": zod.object({
+  "activeConversations7d": zod.number().int(),
+  "assistantMessages7d": zod.number().int(),
+  "toolCallingTurns7d": zod.number().int(),
+  "whatsappThreads": zod.number().int()
+}),
+  "growth": zod.object({
+  "newOrganizations30d": zod.number().int(),
+  "newUsers30d": zod.number().int(),
+  "transactions30d": zod.number().int()
+})
+})
+
+

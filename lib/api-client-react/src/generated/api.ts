@@ -29,6 +29,8 @@ import type {
   ListFeaturesParams,
   ListManagementActionsParams,
   ListReviewsParams,
+  ListSamBooksAgentRunsParams,
+  ListSamBooksFeatureRequestsParams,
   ManagementAction,
   ManagementActionDecision,
   ManagementActionInput,
@@ -36,7 +38,13 @@ import type {
   Project,
   ProjectInput,
   Review,
-  ReviewDecision
+  ReviewDecision,
+  SamBooksAgentRun,
+  SamBooksFeatureRequest,
+  SamBooksMetrics,
+  SamBooksOverview,
+  SamBooksProject,
+  UpstreamUnavailableResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1292,4 +1300,403 @@ export const useDecideManagementAction = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDecideManagementActionMutationOptions(options));
     }
+
+export const getGetSamBooksOverviewUrl = () => {
+
+
+
+
+  return `/api/sam-books/overview`
+}
+
+/**
+ * @summary Sam Books platform overview
+ */
+export const getSamBooksOverview = async ( options?: Parameters<typeof customFetch>[1]): Promise<SamBooksOverview> => {
+
+  return customFetch<SamBooksOverview>(getGetSamBooksOverviewUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSamBooksOverviewQueryKey = () => {
+    return [
+    `/api/sam-books/overview`
+    ] as const;
+    }
+
+
+export const getGetSamBooksOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getSamBooksOverview>>, TError = ErrorType<UpstreamUnavailableResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSamBooksOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSamBooksOverviewQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSamBooksOverview>>> = ({ signal }) => getSamBooksOverview({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSamBooksOverview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSamBooksOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getSamBooksOverview>>>
+export type GetSamBooksOverviewQueryError = ErrorType<UpstreamUnavailableResponse>
+
+
+/**
+ * @summary Sam Books platform overview
+ */
+
+export function useGetSamBooksOverview<TData = Awaited<ReturnType<typeof getSamBooksOverview>>, TError = ErrorType<UpstreamUnavailableResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSamBooksOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSamBooksOverviewQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListSamBooksProjectsUrl = () => {
+
+
+
+
+  return `/api/sam-books/projects`
+}
+
+/**
+ * @summary Sam Books custom modules across every organization
+ */
+export const listSamBooksProjects = async ( options?: Parameters<typeof customFetch>[1]): Promise<SamBooksProject[]> => {
+
+  return customFetch<SamBooksProject[]>(getListSamBooksProjectsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSamBooksProjectsQueryKey = () => {
+    return [
+    `/api/sam-books/projects`
+    ] as const;
+    }
+
+
+export const getListSamBooksProjectsQueryOptions = <TData = Awaited<ReturnType<typeof listSamBooksProjects>>, TError = ErrorType<UpstreamUnavailableResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSamBooksProjects>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSamBooksProjectsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSamBooksProjects>>> = ({ signal }) => listSamBooksProjects({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSamBooksProjects>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSamBooksProjectsQueryResult = NonNullable<Awaited<ReturnType<typeof listSamBooksProjects>>>
+export type ListSamBooksProjectsQueryError = ErrorType<UpstreamUnavailableResponse>
+
+
+/**
+ * @summary Sam Books custom modules across every organization
+ */
+
+export function useListSamBooksProjects<TData = Awaited<ReturnType<typeof listSamBooksProjects>>, TError = ErrorType<UpstreamUnavailableResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSamBooksProjects>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSamBooksProjectsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListSamBooksFeatureRequestsUrl = (params?: ListSamBooksFeatureRequestsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/sam-books/feature-requests?${stringifiedParams}` : `/api/sam-books/feature-requests`
+}
+
+/**
+ * @summary Sam Books feature-request approval queue
+ */
+export const listSamBooksFeatureRequests = async (params?: ListSamBooksFeatureRequestsParams, options?: Parameters<typeof customFetch>[1]): Promise<SamBooksFeatureRequest[]> => {
+
+  return customFetch<SamBooksFeatureRequest[]>(getListSamBooksFeatureRequestsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSamBooksFeatureRequestsQueryKey = (params?: ListSamBooksFeatureRequestsParams,) => {
+    return [
+    `/api/sam-books/feature-requests`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSamBooksFeatureRequestsQueryOptions = <TData = Awaited<ReturnType<typeof listSamBooksFeatureRequests>>, TError = ErrorType<UpstreamUnavailableResponse>>(params?: ListSamBooksFeatureRequestsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSamBooksFeatureRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSamBooksFeatureRequestsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSamBooksFeatureRequests>>> = ({ signal }) => listSamBooksFeatureRequests(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSamBooksFeatureRequests>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSamBooksFeatureRequestsQueryResult = NonNullable<Awaited<ReturnType<typeof listSamBooksFeatureRequests>>>
+export type ListSamBooksFeatureRequestsQueryError = ErrorType<UpstreamUnavailableResponse>
+
+
+/**
+ * @summary Sam Books feature-request approval queue
+ */
+
+export function useListSamBooksFeatureRequests<TData = Awaited<ReturnType<typeof listSamBooksFeatureRequests>>, TError = ErrorType<UpstreamUnavailableResponse>>(
+ params?: ListSamBooksFeatureRequestsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSamBooksFeatureRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSamBooksFeatureRequestsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListSamBooksAgentRunsUrl = (params?: ListSamBooksAgentRunsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/sam-books/agent-runs?${stringifiedParams}` : `/api/sam-books/agent-runs`
+}
+
+/**
+ * @summary Sam Books module-builder agent runs
+ */
+export const listSamBooksAgentRuns = async (params?: ListSamBooksAgentRunsParams, options?: Parameters<typeof customFetch>[1]): Promise<SamBooksAgentRun[]> => {
+
+  return customFetch<SamBooksAgentRun[]>(getListSamBooksAgentRunsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSamBooksAgentRunsQueryKey = (params?: ListSamBooksAgentRunsParams,) => {
+    return [
+    `/api/sam-books/agent-runs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSamBooksAgentRunsQueryOptions = <TData = Awaited<ReturnType<typeof listSamBooksAgentRuns>>, TError = ErrorType<UpstreamUnavailableResponse>>(params?: ListSamBooksAgentRunsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSamBooksAgentRuns>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSamBooksAgentRunsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSamBooksAgentRuns>>> = ({ signal }) => listSamBooksAgentRuns(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSamBooksAgentRuns>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSamBooksAgentRunsQueryResult = NonNullable<Awaited<ReturnType<typeof listSamBooksAgentRuns>>>
+export type ListSamBooksAgentRunsQueryError = ErrorType<UpstreamUnavailableResponse>
+
+
+/**
+ * @summary Sam Books module-builder agent runs
+ */
+
+export function useListSamBooksAgentRuns<TData = Awaited<ReturnType<typeof listSamBooksAgentRuns>>, TError = ErrorType<UpstreamUnavailableResponse>>(
+ params?: ListSamBooksAgentRunsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSamBooksAgentRuns>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSamBooksAgentRunsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetSamBooksMetricsUrl = () => {
+
+
+
+
+  return `/api/sam-books/metrics`
+}
+
+/**
+ * @summary Sam Books performance KPIs
+ */
+export const getSamBooksMetrics = async ( options?: Parameters<typeof customFetch>[1]): Promise<SamBooksMetrics> => {
+
+  return customFetch<SamBooksMetrics>(getGetSamBooksMetricsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSamBooksMetricsQueryKey = () => {
+    return [
+    `/api/sam-books/metrics`
+    ] as const;
+    }
+
+
+export const getGetSamBooksMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getSamBooksMetrics>>, TError = ErrorType<UpstreamUnavailableResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSamBooksMetrics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSamBooksMetricsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSamBooksMetrics>>> = ({ signal }) => getSamBooksMetrics({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSamBooksMetrics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSamBooksMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getSamBooksMetrics>>>
+export type GetSamBooksMetricsQueryError = ErrorType<UpstreamUnavailableResponse>
+
+
+/**
+ * @summary Sam Books performance KPIs
+ */
+
+export function useGetSamBooksMetrics<TData = Awaited<ReturnType<typeof getSamBooksMetrics>>, TError = ErrorType<UpstreamUnavailableResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSamBooksMetrics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSamBooksMetricsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
