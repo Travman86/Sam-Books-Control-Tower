@@ -337,7 +337,7 @@ export const ListActivityResponse = zod.array(ListActivityResponseItem)
  * @summary List proposed project management actions
  */
 export const ListManagementActionsQueryParams = zod.object({
-  "status": zod.enum(['pending', 'approved', 'rejected']).optional(),
+  "status": zod.enum(['not_started', 'in_progress', 'road_block', 'approved', 'rejected']).optional(),
   "projectId": zod.coerce.string().optional()
 })
 
@@ -350,7 +350,7 @@ export const ListManagementActionsResponseItem = zod.object({
   "description": zod.string(),
   "requestedBy": zod.string(),
   "approver": zod.string(),
-  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "status": zod.enum(['not_started', 'in_progress', 'road_block', 'approved', 'rejected']),
   "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
   "dueDate": zod.coerce.date().nullable(),
   "submittedAt": zod.coerce.date(),
@@ -398,7 +398,7 @@ export const CreateManagementActionResponse = zod.object({
   "description": zod.string(),
   "requestedBy": zod.string(),
   "approver": zod.string(),
-  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "status": zod.enum(['not_started', 'in_progress', 'road_block', 'approved', 'rejected']),
   "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
   "dueDate": zod.coerce.date().nullable(),
   "submittedAt": zod.coerce.date(),
@@ -479,7 +479,7 @@ export const GetManagementActionResponse = zod.object({
   "description": zod.string(),
   "requestedBy": zod.string(),
   "approver": zod.string(),
-  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "status": zod.enum(['not_started', 'in_progress', 'road_block', 'approved', 'rejected']),
   "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
   "dueDate": zod.coerce.date().nullable(),
   "submittedAt": zod.coerce.date(),
@@ -504,7 +504,7 @@ export const decideManagementActionBodyNoteMax = 500;
 
 
 export const DecideManagementActionBody = zod.object({
-  "decision": zod.enum(['pending', 'approved', 'rejected']),
+  "decision": zod.enum(['not_started', 'in_progress', 'road_block', 'approved', 'rejected']),
   "note": zod.string().max(decideManagementActionBodyNoteMax).optional()
 })
 
@@ -517,7 +517,7 @@ export const DecideManagementActionResponse = zod.object({
   "description": zod.string(),
   "requestedBy": zod.string(),
   "approver": zod.string(),
-  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "status": zod.enum(['not_started', 'in_progress', 'road_block', 'approved', 'rejected']),
   "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
   "dueDate": zod.coerce.date().nullable(),
   "submittedAt": zod.coerce.date(),

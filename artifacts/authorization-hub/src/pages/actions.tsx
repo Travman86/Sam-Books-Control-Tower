@@ -17,7 +17,6 @@ import {
 } from "@workspace/api-client-react"
 import type { ManagementAction } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
-import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,23 +24,23 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, ArrowRight, Clock, Filter, Sparkles, Loader2, GripVertical, CheckCircle2, CircleDashed, XCircle, LayoutList, FileUp, X } from "lucide-react"
+import { Plus, ArrowRight, Clock, Filter, Sparkles, Loader2, LayoutList, FileUp, X } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { useUpload, type UploadResponse } from "@workspace/object-storage-web"
 
-const COLUMNS = [
-  { id: "pending", label: "Pending", icon: CircleDashed },
-  { id: "approved", label: "Approved", icon: CheckCircle2 },
-  { id: "rejected", label: "Rejected", icon: XCircle },
-] as const
-
-const STATUS_COLOR: Record<string, string> = {
-  pending: "#f59e0b", // amber-500
-  approved: "#10b981", // emerald-500
-  rejected: "#ef4444", // red-500
-}
+const STATUS_OPTIONS: Array<{
+  value: ManagementAction["status"]
+  label: string
+  color: string
+}> = [
+  { value: "not_started", label: "Not Started", color: "bg-slate-400" },
+  { value: "in_progress", label: "In Progress", color: "bg-blue-500" },
+  { value: "road_block", label: "Road-Block", color: "bg-orange-500" },
+  { value: "approved", label: "Approved", color: "bg-emerald-500" },
+  { value: "rejected", label: "Rejected", color: "bg-red-500" },
+]
 
 const ACTION_TYPE_LABEL: Record<string, string> = {
   feature_request: "Feature Request",
@@ -59,10 +58,6 @@ const PRIORITY_STYLES: Record<string, string> = {
   high: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
   medium: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
   low: "bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/20",
-}
-
-function isDecision(id: string): id is "pending" | "approved" | "rejected" {
-  return id === "pending" || id === "approved" || id === "rejected"
 }
 
 const actionSchema = z.object({
@@ -210,18 +205,9 @@ export default function Actions() {
     )
   }
 
-  const columns: Record<string, ManagementAction[]> = { pending: [], approved: [], rejected: [] }
-  for (const action of actions ?? []) {
-    (columns[action.status] ??= []).push(action)
-  }
-
-  const handleDragEnd = (result: DropResult) => {
-    const { source, destination, draggableId } = result
-    if (!destination || destination.droppableId === source.droppableId) return
-    if (!isDecision(destination.droppableId)) return
-
+  const handleStatusChange = (actionId: string, status: ManagementAction["status"]) => {
     decideAction.mutate(
-      { actionId: draggableId, data: { decision: destination.droppableId } },
+      { actionId, data: { decision: status } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListManagementActionsQueryKey() })
@@ -245,7 +231,7 @@ export default function Actions() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Management Actions</h1>
           <p className="text-muted-foreground mt-1.5 text-sm">
-            Govern project-management actions proposed by AI agents. Drag items to approve or reject.
+            Govern project-management actions proposed by AI agents and update their status.
           </p>
         </div>
 
@@ -520,14 +506,14 @@ export default function Actions() {
         </div>
 
         <div className="overflow-x-auto">
-          <div className="min-w-[900px]">
+          <div className="min-w-[1040px]">
             {/* Global Table Header */}
             <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/10 border-b border-border text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-              <div className="w-[30px]" />
               <div className="flex-1 min-w-[200px]">Action</div>
               <div className="w-[140px]">Project</div>
               <div className="w-[150px]">Type</div>
               <div className="w-[100px]">Priority</div>
+              <div className="w-[150px]">Status</div>
               <div className="w-[130px]">Requested</div>
               <div className="w-[48px]" />
             </div>
@@ -546,54 +532,14 @@ export default function Actions() {
                 </p>
               </div>
             ) : (
-              <DragDropContext onDragEnd={handleDragEnd}>
-                {COLUMNS.map((column) => (
-                  <Droppable key={column.id} droppableId={column.id}>
-                    {(provided, snapshot) => (
-                      <div className="flex flex-col bg-background">
-                        {/* Section Header */}
-                        <div className="flex items-center gap-2 px-4 py-2 bg-muted/5 border-b border-border/50 sticky top-0 z-10">
-                          <column.icon className="w-3.5 h-3.5" style={{ color: STATUS_COLOR[column.id] }} />
-                          <span
-                            className="text-[11px] font-bold uppercase tracking-wider"
-                            style={{ color: STATUS_COLOR[column.id] }}
-                          >
-                            {column.label}
-                          </span>
-                          <span className="text-[10px] font-semibold bg-background border border-border/60 px-1.5 py-0.5 rounded text-muted-foreground ml-1 shadow-sm">
-                            {columns[column.id]?.length ?? 0}
-                          </span>
-                        </div>
-
-                        {/* Droppable Area */}
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.droppableProps}
-                          className={cn(
-                            "flex flex-col transition-colors min-h-[44px]",
-                            snapshot.isDraggingOver && "bg-primary/5"
-                          )}
-                        >
-                          {columns[column.id]?.map((action, index) => (
-                            <Draggable key={action.id} draggableId={action.id} index={index}>
-                              {(dragProvided, dragSnapshot) => (
-                                <div
-                                  ref={dragProvided.innerRef}
-                                  {...dragProvided.draggableProps}
-                                  style={dragProvided.draggableProps.style}
-                                  className={cn(
-                                    "flex items-center gap-3 px-4 py-2.5 border-b border-border/40 bg-background transition-colors hover:bg-muted/30 group",
-                                    dragSnapshot.isDragging && "shadow-xl ring-1 ring-primary/30 z-50 bg-background"
-                                  )}
-                                >
-                                  {/* Drag Handle */}
-                                  <div
-                                    {...dragProvided.dragHandleProps}
-                                    className="w-[30px] opacity-0 group-hover:opacity-100 text-muted-foreground/30 hover:text-foreground cursor-grab active:cursor-grabbing flex items-center justify-center h-full transition-opacity"
-                                  >
-                                    <GripVertical className="w-4 h-4" />
-                                  </div>
-
+              <div className="flex flex-col bg-background">
+                {(actions ?? []).map((action) => {
+                  const status = STATUS_OPTIONS.find((option) => option.value === action.status) ?? STATUS_OPTIONS[0]
+                  return (
+                    <div
+                      key={action.id}
+                      className="flex items-center gap-3 px-4 py-2.5 border-b border-border/40 bg-background transition-colors hover:bg-muted/30 group"
+                    >
                                   {/* Target & Desc */}
                                   <div className="flex-1 min-w-[200px] flex flex-col pr-4">
                                     <span className="text-sm font-semibold text-foreground truncate">{action.target}</span>
@@ -624,6 +570,34 @@ export default function Actions() {
                                     </span>
                                   </div>
 
+                                  {/* Status */}
+                                  <div className="w-[150px] pr-2">
+                                    <Select
+                                      value={action.status}
+                                      onValueChange={(value) => handleStatusChange(action.id, value as ManagementAction["status"])}
+                                      disabled={decideAction.isPending}
+                                    >
+                                      <SelectTrigger className="h-7 border-border/60 bg-background px-2 text-xs shadow-none">
+                                        <SelectValue>
+                                          <span className="flex items-center gap-2">
+                                            <span className={cn("h-2 w-2 rounded-full", status.color)} />
+                                            <span>{status.label}</span>
+                                          </span>
+                                        </SelectValue>
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {STATUS_OPTIONS.map((option) => (
+                                          <SelectItem key={option.value} value={option.value}>
+                                            <span className="flex items-center gap-2">
+                                              <span className={cn("h-2 w-2 rounded-full", option.color)} />
+                                              <span>{option.label}</span>
+                                            </span>
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
                                   {/* Date */}
                                   <div className="w-[130px] flex items-center gap-1.5 text-xs text-muted-foreground">
                                     <Clock className="w-3 h-3 text-muted-foreground/50 shrink-0" />
@@ -636,22 +610,10 @@ export default function Actions() {
                                       <ArrowRight className="w-4 h-4" />
                                     </Link>
                                   </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                          {columns[column.id]?.length === 0 && (
-                            <div className="py-6 text-center text-xs font-medium text-muted-foreground/50 bg-background border-b border-border/40">
-                              No items in {column.label.toLowerCase()}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </Droppable>
-                ))}
-              </DragDropContext>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
         </div>

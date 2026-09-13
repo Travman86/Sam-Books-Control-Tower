@@ -10,7 +10,9 @@ export type ManagementActionDecisionDecision = typeof ManagementActionDecisionDe
 
 
 export const ManagementActionDecisionDecision = {
-  pending: 'pending',
+  not_started: 'not_started',
+  in_progress: 'in_progress',
+  road_block: 'road_block',
   approved: 'approved',
   rejected: 'rejected',
 } as const;

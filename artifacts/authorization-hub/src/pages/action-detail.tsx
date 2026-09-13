@@ -12,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Clock, ShieldCheck, ShieldAlert, Check, X, FileText, Calendar, User, Paperclip, ExternalLink } from "lucide-react"
+import { ArrowLeft, Clock, ShieldCheck, ShieldAlert, Check, X, FileText, Calendar, User, Paperclip, ExternalLink, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 
@@ -21,6 +21,14 @@ function formatAttachmentSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
+
+const STATUS_BADGES = {
+  not_started: { label: "Not Started", className: "bg-slate-500/10 text-slate-600 border-slate-500/20" },
+  in_progress: { label: "In Progress", className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+  road_block: { label: "Road-Block", className: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
+  approved: { label: "Approved", className: "bg-green-500/10 text-green-600 border-green-500/20" },
+  rejected: { label: "Rejected", className: "bg-red-500/10 text-red-600 border-red-500/20" },
+} as const
 
 export default function ActionDetail({ params }: { params: { id: string } }) {
   const { id } = params
@@ -34,6 +42,8 @@ export default function ActionDetail({ params }: { params: { id: string } }) {
 
   if (isLoading) return <div className="flex justify-center p-24"><div className="animate-pulse text-muted-foreground">Loading action details...</div></div>
   if (error || !action) return <div className="p-24 text-center text-destructive font-medium">Action not found or error loading.</div>
+  const isFinal = action.status === "approved" || action.status === "rejected"
+  const statusBadge = STATUS_BADGES[action.status]
 
   const handleDecision = (decision: 'approved' | 'rejected') => {
     if (decision === 'rejected' && !rejectNote.trim()) {
@@ -76,9 +86,7 @@ export default function ActionDetail({ params }: { params: { id: string } }) {
               }>
                 {action.priority} priority
               </Badge>
-              {action.status === 'pending' && <Badge variant="warning" className="bg-amber-500/10 text-amber-600 border-amber-500/20">Pending Approval</Badge>}
-              {action.status === 'approved' && <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Approved</Badge>}
-              {action.status === 'rejected' && <Badge variant="destructive">Rejected</Badge>}
+              <Badge variant="outline" className={statusBadge.className}>{statusBadge.label}</Badge>
             </div>
             <h1 className="text-3xl font-bold tracking-tight mt-1">{action.target}</h1>
             <p className="text-sm font-medium uppercase tracking-wider text-primary mt-2 flex items-center gap-2">
@@ -128,7 +136,7 @@ export default function ActionDetail({ params }: { params: { id: string } }) {
             </Card>
           )}
 
-          {action.status !== 'pending' && (
+          {isFinal && (
             <Card className={action.status === 'approved' ? 'border-green-500/30 bg-green-500/5' : 'border-destructive/30 bg-destructive/5'}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -147,7 +155,7 @@ export default function ActionDetail({ params }: { params: { id: string } }) {
             </Card>
           )}
 
-          {action.status === 'pending' && (
+          {!isFinal && (
             <Card className="border-primary/30 shadow-md">
               <CardHeader>
                 <CardTitle>Authorization Controls</CardTitle>
@@ -240,26 +248,5 @@ export default function ActionDetail({ params }: { params: { id: string } }) {
         </div>
       </div>
     </div>
-  )
-}
-
-function AlertCircle(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" x2="12" y1="8" y2="12" />
-      <line x1="12" x2="12.01" y1="16" y2="16" />
-    </svg>
   )
 }

@@ -80,7 +80,7 @@ export const managementActionsTable = pgTable(
     description: text("description").notNull(),
     requestedBy: text("requested_by").notNull(),
     approver: text("approver").notNull(),
-    status: text("status").notNull().default("pending"),
+    status: text("status").notNull().default("not_started"),
     priority: text("priority").notNull().default("medium"),
     dueDate: text("due_date"),
     submittedAt: timestamp("submitted_at", { withTimezone: true })

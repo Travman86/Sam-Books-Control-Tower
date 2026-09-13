@@ -208,7 +208,10 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
         .length,
       reviewSlaHours: Math.round(averageHours * 10) / 10,
       pendingManagementActions: managementActions.filter(
-        (action) => action.status === "pending",
+        (action) =>
+          action.status === "not_started" ||
+          action.status === "in_progress" ||
+          action.status === "road_block",
       ).length,
       latestReview,
       activity,
@@ -469,7 +472,7 @@ router.post("/management-actions", async (req, res): Promise<void> => {
       dueDate: parsed.data.dueDate
         ? parsed.data.dueDate.toISOString().slice(0, 10)
         : null,
-      status: "pending",
+      status: "not_started",
     })
     .returning();
   await db.insert(activityTable).values({
@@ -512,17 +515,15 @@ router.patch(
         .json({ error: params.error?.message ?? body.error?.message });
       return;
     }
-    // The Kanban board allows moving a card between any of the three
-    // columns at any time (including back to Pending, to undo a decision) —
-    // unlike a one-way approval flow, so this doesn't gate on the action's
-    // current status.
-    const isPending = body.data.decision === "pending";
+    const isFinal =
+      body.data.decision === "approved" ||
+      body.data.decision === "rejected";
     const [action] = await db
       .update(managementActionsTable)
       .set({
         status: body.data.decision,
-        decisionNote: isPending ? null : body.data.note ?? null,
-        decidedAt: isPending ? null : new Date(),
+        decisionNote: isFinal ? body.data.note ?? null : null,
+        decidedAt: isFinal ? new Date() : null,
       })
       .where(eq(managementActionsTable.id, params.data.actionId))
       .returning();
@@ -533,11 +534,8 @@ router.patch(
     const views = await managementActionViews();
     const view = views.find((item) => item.id === action.id)!;
     await db.insert(activityTable).values({
-      // "pending" isn't a valid Activity.kind (that enum only knows
-      // submitted/approved/rejected/connected/revoked) — a move back to the
-      // queue is logged as a re-submission instead.
-      kind: isPending ? "submitted" : body.data.decision,
-      title: isPending ? `${view.target} moved back to pending` : `${view.target} ${body.data.decision}`,
+      kind: isFinal ? body.data.decision : "submitted",
+      title: `${view.target} moved to ${body.data.decision.replace(/_/g, " ")}`,
       detail:
         body.data.note ||
         `Project management action reviewed for ${view.projectName}.`,

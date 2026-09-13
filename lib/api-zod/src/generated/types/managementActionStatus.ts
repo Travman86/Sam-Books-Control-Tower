@@ -10,7 +10,9 @@ export type ManagementActionStatus = typeof ManagementActionStatus[keyof typeof 
 
 
 export const ManagementActionStatus = {
-  pending: 'pending',
+  not_started: 'not_started',
+  in_progress: 'in_progress',
+  road_block: 'road_block',
   approved: 'approved',
   rejected: 'rejected',
 } as const;

@@ -281,7 +281,7 @@ paths:
           name: status
           schema:
             type: string
-            enum: [pending, approved, rejected]
+            enum: [not_started, in_progress, road_block, approved, rejected]
         - in: query
           name: projectId
           schema:
@@ -795,7 +795,7 @@ components:
         approver: { type: string }
         status:
           type: string
-          enum: [pending, approved, rejected]
+          enum: [not_started, in_progress, road_block, approved, rejected]
         priority:
           type: string
           enum: [low, medium, high, urgent]
@@ -860,9 +860,7 @@ components:
       properties:
         decision:
           type: string
-          # "pending" lets a card be dragged back to the queue (undo an
-          # approve/reject), matching the Kanban board's free movement.
-          enum: [pending, approved, rejected]
+          enum: [not_started, in_progress, road_block, approved, rejected]
         note: { type: string, maxLength: 500 }
       required: [decision]
     ManagementActionAiDraftInput:
