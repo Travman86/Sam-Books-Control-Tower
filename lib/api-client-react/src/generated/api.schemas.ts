@@ -5,6 +5,15 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface LoginInput {
+  /** @minLength 1 */
+  password: string;
+}
+
+export interface AuthStatus {
+  authenticated: boolean;
+}
+
 export interface HealthStatus {
   status: string;
 }

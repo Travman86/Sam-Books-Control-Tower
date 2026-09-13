@@ -8,6 +8,7 @@
 
 export * from './activity';
 export * from './activityKind';
+export * from './authStatus';
 export * from './dashboardSummary';
 export * from './error';
 export * from './feature';
@@ -22,6 +23,7 @@ export * from './listReviewsParams';
 export * from './listReviewsStatus';
 export * from './listSamBooksAgentRunsParams';
 export * from './listSamBooksFeatureRequestsParams';
+export * from './loginInput';
 export * from './managementAction';
 export * from './managementActionActionType';
 export * from './managementActionAiDraft';
