@@ -176,6 +176,7 @@ export type ManagementActionActionType = typeof ManagementActionActionType[keyof
 
 
 export const ManagementActionActionType = {
+  feature_request: 'feature_request',
   create_task: 'create_task',
   update_priority: 'update_priority',
   reassign_owner: 'reassign_owner',
@@ -228,6 +229,7 @@ export type ManagementActionInputActionType = typeof ManagementActionInputAction
 
 
 export const ManagementActionInputActionType = {
+  feature_request: 'feature_request',
   create_task: 'create_task',
   update_priority: 'update_priority',
   reassign_owner: 'reassign_owner',

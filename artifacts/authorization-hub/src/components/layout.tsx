@@ -42,10 +42,10 @@ const SAM_BOOKS_NAV = [
 const AUTHORIZATION_NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/projects", label: "Connections", icon: FolderKanban },
-  { href: "/policies", label: "Policies", icon: FileText },
   { href: "/reviews", label: "Reviews", icon: CheckSquare },
   { href: "/actions", label: "Actions", icon: ListTodo },
   { href: "/activity", label: "Activity", icon: ActivitySquare },
+  { href: "/policies", label: "Policies", icon: FileText },
 ]
 
 const SAM_BOOKS_SUB_ICON: Record<string, React.ElementType> = {

@@ -117,6 +117,7 @@ export default function Actions() {
                     value={formData.actionType}
                     onChange={e => setFormData({...formData, actionType: e.target.value})}
                   >
+                    <option value="feature_request">Feature Request</option>
                     <option value="create_task">Create Task</option>
                     <option value="update_priority">Update Priority</option>
                     <option value="reassign_owner">Reassign Owner</option>

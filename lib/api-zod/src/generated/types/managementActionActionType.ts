@@ -10,6 +10,7 @@ export type ManagementActionActionType = typeof ManagementActionActionType[keyof
 
 
 export const ManagementActionActionType = {
+  feature_request: 'feature_request',
   create_task: 'create_task',
   update_priority: 'update_priority',
   reassign_owner: 'reassign_owner',
