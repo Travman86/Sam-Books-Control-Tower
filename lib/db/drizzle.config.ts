@@ -11,4 +11,7 @@ export default defineConfig({
   dbCredentials: {
     url: process.env.DATABASE_URL,
   },
+  // The connect-pg-simple session table is created by hand (see
+  // artifacts/api-server's session setup) — drizzle doesn't manage it.
+  tablesFilter: ["!session"],
 });
