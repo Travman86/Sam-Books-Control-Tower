@@ -429,6 +429,25 @@ export const DecideManagementActionResponse = zod.object({
 
 
 /**
+ * @summary Use AI to draft an action's fields from a one-line request
+ */
+export const draftManagementActionBodyPromptMax = 2000;
+
+
+
+export const DraftManagementActionBody = zod.object({
+  "prompt": zod.string().min(1).max(draftManagementActionBodyPromptMax)
+})
+
+export const DraftManagementActionResponse = zod.object({
+  "actionType": zod.enum(['feature_request', 'create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "target": zod.string(),
+  "description": zod.string(),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent'])
+})
+
+
+/**
  * @summary Sam Books platform overview
  */
 export const GetSamBooksOverviewResponse = zod.object({

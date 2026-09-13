@@ -33,6 +33,8 @@ import type {
   ListSamBooksAgentRunsParams,
   ListSamBooksFeatureRequestsParams,
   ManagementAction,
+  ManagementActionAiDraft,
+  ManagementActionAiDraftInput,
   ManagementActionDecision,
   ManagementActionInput,
   NotFoundResponse,
@@ -1304,6 +1306,77 @@ export const useDecideManagementAction = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDecideManagementActionMutationOptions(options));
+    }
+
+export const getDraftManagementActionUrl = () => {
+
+
+
+
+  return `/api/management-actions/ai-draft`
+}
+
+/**
+ * @summary Use AI to draft an action's fields from a one-line request
+ */
+export const draftManagementAction = async (managementActionAiDraftInput: ManagementActionAiDraftInput, options?: Parameters<typeof customFetch>[1]): Promise<ManagementActionAiDraft> => {
+
+  return customFetch<ManagementActionAiDraft>(getDraftManagementActionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(managementActionAiDraftInput)
+  }
+);}
+
+
+
+
+
+export const getDraftManagementActionMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof draftManagementAction>>, TError,{data: BodyType<ManagementActionAiDraftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof draftManagementAction>>, TError,{data: BodyType<ManagementActionAiDraftInput>}, TContext> => {
+
+const mutationKey = ['draftManagementAction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof draftManagementAction>>, {data: BodyType<ManagementActionAiDraftInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  draftManagementAction(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DraftManagementActionMutationResult = NonNullable<Awaited<ReturnType<typeof draftManagementAction>>>
+    export type DraftManagementActionMutationBody = BodyType<ManagementActionAiDraftInput>
+    export type DraftManagementActionMutationError = ErrorType<Error>
+
+    /**
+ * @summary Use AI to draft an action's fields from a one-line request
+ */
+export const useDraftManagementAction = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof draftManagementAction>>, TError,{data: BodyType<ManagementActionAiDraftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof draftManagementAction>>,
+        TError,
+        {data: BodyType<ManagementActionAiDraftInput>},
+        TContext
+      > => {
+      return useMutation(getDraftManagementActionMutationOptions(options));
     }
 
 export const getGetSamBooksOverviewUrl = () => {
