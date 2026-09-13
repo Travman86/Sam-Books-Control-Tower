@@ -327,6 +327,72 @@ paths:
                   $ref: "#/components/schemas/SamBooksProject"
         "502":
           $ref: "#/components/responses/UpstreamUnavailable"
+  /sam-books/feature-requests/{featureRequestId}:
+    get:
+      operationId: getSamBooksFeatureRequest
+      tags: [sam-books]
+      summary: Sam Books feature-request detail
+      parameters:
+        - $ref: "#/components/parameters/SamBooksFeatureRequestId"
+      responses:
+        "200":
+          description: Sam Books feature request detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamBooksFeatureRequestDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/UpstreamUnavailable"
+  /sam-books/feature-requests/{featureRequestId}/decision:
+    post:
+      operationId: decideSamBooksFeatureRequest
+      tags: [sam-books]
+      summary: Approve, reject, or request changes on a Sam Books feature request
+      parameters:
+        - $ref: "#/components/parameters/SamBooksFeatureRequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SamBooksFeatureRequestDecision"
+      responses:
+        "200":
+          description: Decided feature request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamBooksFeatureRequestDecisionResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The request was already decided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          $ref: "#/components/responses/UpstreamUnavailable"
+  /sam-books/agent-runs/{agentRunId}:
+    get:
+      operationId: getSamBooksAgentRun
+      tags: [sam-books]
+      summary: Sam Books agent-run detail
+      parameters:
+        - $ref: "#/components/parameters/SamBooksAgentRunId"
+      responses:
+        "200":
+          description: Sam Books agent run detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SamBooksAgentRunDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/UpstreamUnavailable"
   /sam-books/feature-requests:
     get:
       operationId: listSamBooksFeatureRequests
@@ -405,6 +471,18 @@ components:
       required: true
       schema:
         type: string
+    SamBooksFeatureRequestId:
+      in: path
+      name: featureRequestId
+      required: true
+      schema:
+        type: integer
+    SamBooksAgentRunId:
+      in: path
+      name: agentRunId
+      required: true
+      schema:
+        type: integer
   responses:
     NotFound:
       description: Resource not found
@@ -706,6 +784,119 @@ components:
         checksTotal: { type: integer }
         durationSeconds: { type: ["number", "null"] }
       required: [id, organizationId, organizationName, moduleId, moduleName, requestId, status, changeScope, prompt, summary, error, createdBy, createdAt, startedAt, completedAt, checksPassed, checksTotal, durationSeconds]
+    SamBooksFeatureRequestDetail:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        problem: { type: string }
+        outcome: { type: string }
+        requirements: { type: array, items: { type: string } }
+        status: { type: string }
+        changeScope: { type: string }
+        organization:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+          required: [id, name]
+        module:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+          required: [id, name]
+        requester:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            email: { type: ["string", "null"] }
+          required: [id, name, email]
+        wireframes:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              version: { type: integer }
+              content: { type: string }
+              createdAt: { type: string, format: date-time }
+            required: [id, version, content, createdAt]
+        decisions:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              decision: { type: string }
+              comment: { type: ["string", "null"] }
+              wireframeVersion: { type: ["integer", "null"] }
+              decidedBy: { type: string }
+              createdAt: { type: string, format: date-time }
+            required: [id, decision, comment, wireframeVersion, decidedBy, createdAt]
+        audit:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              action: { type: string }
+              actor: { type: string }
+              createdAt: { type: string, format: date-time }
+            required: [id, action, actor, createdAt]
+        submittedAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, title, problem, outcome, requirements, status, changeScope, organization, module, requester, wireframes, decisions, audit, submittedAt, createdAt, updatedAt]
+    SamBooksFeatureRequestDecision:
+      type: object
+      properties:
+        decision: { type: string, enum: [approved, rejected, changes_requested] }
+        comment: { type: string, maxLength: 4000 }
+      required: [decision]
+    SamBooksFeatureRequestDecisionResult:
+      type: object
+      properties:
+        id: { type: integer }
+        status: { type: string }
+      required: [id, status]
+    SamBooksAgentRunDetail:
+      type: object
+      properties:
+        id: { type: integer }
+        organizationId: { type: integer }
+        moduleId: { type: integer }
+        requestId: { type: ["integer", "null"] }
+        status: { type: string }
+        changeScope: { type: string }
+        prompt: { type: string }
+        summary: { type: ["string", "null"] }
+        error: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        startedAt: { type: ["string", "null"], format: date-time }
+        completedAt: { type: ["string", "null"], format: date-time }
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              type: { type: string }
+              message: { type: string }
+              createdAt: { type: string, format: date-time }
+            required: [id, type, message, createdAt]
+        checks:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              name: { type: string }
+              status: { type: string }
+              output: { type: string }
+            required: [id, name, status, output]
+      required: [id, organizationId, moduleId, requestId, status, changeScope, prompt, summary, error, createdAt, startedAt, completedAt, events, checks]
     SamBooksQueueWindow:
       type: object
       properties:

@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Layout } from '@/components/layout';
 import NotFound from '@/pages/not-found';
@@ -16,7 +17,9 @@ import Activity from '@/pages/activity';
 import SamBooksOverview from '@/pages/sam-books-overview';
 import SamBooksProjects from '@/pages/sam-books-projects';
 import SamBooksApprovals from '@/pages/sam-books-approvals';
+import SamBooksApprovalDetail from '@/pages/sam-books-approval-detail';
 import SamBooksAgentRuns from '@/pages/sam-books-agent-runs';
+import SamBooksAgentRunDetail from '@/pages/sam-books-agent-run-detail';
 import SamBooksPerformance from '@/pages/sam-books-performance';
 import {
   Route,
@@ -43,7 +46,9 @@ function Router() {
           <Route path="/sam-books" component={SamBooksOverview} />
           <Route path="/sam-books/projects" component={SamBooksProjects} />
           <Route path="/sam-books/approvals" component={SamBooksApprovals} />
+          <Route path="/sam-books/approvals/:id" component={SamBooksApprovalDetail} />
           <Route path="/sam-books/agent-runs" component={SamBooksAgentRuns} />
+          <Route path="/sam-books/agent-runs/:id" component={SamBooksAgentRunDetail} />
           <Route path="/sam-books/performance" component={SamBooksPerformance} />
           <Route component={NotFound} />
         </Switch>
@@ -65,6 +70,11 @@ function App() {
           <Router />
         </WouterRouter>
         <Toaster />
+        {/* Some pages (policies, projects, review-detail, and now the Sam
+            Books decision flow) use sonner's `toast()` rather than the
+            shadcn useToast hook — mount its Toaster too or those calls are
+            silently invisible. */}
+        <SonnerToaster />
       </TooltipProvider>
     </QueryClientProvider>
   );
