@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import {
   activityTable,
   db,
@@ -130,8 +130,17 @@ async function reviewViews(status?: string) {
 }
 
 async function managementActionViews(status?: string, projectId?: string) {
+  const statusFilter =
+    status === "in_progress"
+      ? or(
+          eq(managementActionsTable.status, "in_progress"),
+          eq(managementActionsTable.status, "pending"),
+        )
+      : status
+        ? eq(managementActionsTable.status, status)
+        : undefined;
   const filters = [
-    status ? eq(managementActionsTable.status, status) : undefined,
+    statusFilter,
     projectId ? eq(managementActionsTable.projectId, projectId) : undefined,
   ].filter(
     (
@@ -153,6 +162,7 @@ async function managementActionViews(status?: string, projectId?: string) {
 
   return actions.map((action) => ({
     ...action,
+    status: action.status === "pending" ? "in_progress" : action.status,
     projectName:
       projects.find((project) => project.id === action.projectId)?.name ??
       "Unknown project",
@@ -211,7 +221,8 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
         (action) =>
           action.status === "not_started" ||
           action.status === "in_progress" ||
-          action.status === "road_block",
+          action.status === "road_block" ||
+          action.status === "pending",
       ).length,
       latestReview,
       activity,
