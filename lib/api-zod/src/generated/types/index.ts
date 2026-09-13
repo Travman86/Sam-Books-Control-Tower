@@ -38,6 +38,8 @@ export * from './managementActionInputActionType';
 export * from './managementActionInputPriority';
 export * from './managementActionPriority';
 export * from './managementActionStatus';
+export * from './managementActionUpdate';
+export * from './managementActionUpdatePriority';
 export * from './notFoundResponse';
 export * from './project';
 export * from './projectInput';

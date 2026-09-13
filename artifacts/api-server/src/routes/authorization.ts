@@ -15,6 +15,8 @@ import {
   CreateManagementActionResponse,
   CreateProjectBody,
   CreateProjectResponse,
+  DeleteManagementActionParams,
+  DeleteManagementActionResponse,
   DecideReviewBody,
   DecideReviewParams,
   DecideReviewResponse,
@@ -39,6 +41,9 @@ import {
   ListReviewsResponse,
   RevokeProjectParams,
   RevokeProjectResponse,
+  UpdateManagementActionDetailsBody,
+  UpdateManagementActionDetailsParams,
+  UpdateManagementActionDetailsResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -514,6 +519,53 @@ router.get("/management-actions/:actionId", async (req, res): Promise<void> => {
   }
   res.json(GetManagementActionResponse.parse(action));
 });
+
+router.patch(
+  "/management-actions/:actionId/details",
+  async (req, res): Promise<void> => {
+    const params = UpdateManagementActionDetailsParams.safeParse(req.params);
+    const body = UpdateManagementActionDetailsBody.safeParse(req.body);
+    if (!params.success || !body.success) {
+      res
+        .status(400)
+        .json({ error: params.error?.message ?? body.error?.message });
+      return;
+    }
+    const [action] = await db
+      .update(managementActionsTable)
+      .set(body.data)
+      .where(eq(managementActionsTable.id, params.data.actionId))
+      .returning();
+    if (!action) {
+      res.status(404).json({ error: "Project management action not found" });
+      return;
+    }
+    const view = (await managementActionViews()).find(
+      (item) => item.id === action.id,
+    )!;
+    res.json(UpdateManagementActionDetailsResponse.parse(view));
+  },
+);
+
+router.delete(
+  "/management-actions/:actionId",
+  async (req, res): Promise<void> => {
+    const params = DeleteManagementActionParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const [deleted] = await db
+      .delete(managementActionsTable)
+      .where(eq(managementActionsTable.id, params.data.actionId))
+      .returning({ id: managementActionsTable.id });
+    if (!deleted) {
+      res.status(404).json({ error: "Project management action not found" });
+      return;
+    }
+    res.status(204).send(DeleteManagementActionResponse.parse(undefined));
+  },
+);
 
 router.patch(
   "/management-actions/:actionId",

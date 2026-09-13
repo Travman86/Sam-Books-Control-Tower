@@ -531,6 +531,55 @@ export const DecideManagementActionResponse = zod.object({
 
 
 /**
+ * @summary Delete a project management action
+ */
+export const DeleteManagementActionParams = zod.object({
+  "actionId": zod.coerce.string()
+})
+
+export const DeleteManagementActionResponse = zod.void()
+
+
+/**
+ * @summary Edit a project management action
+ */
+export const UpdateManagementActionDetailsParams = zod.object({
+  "actionId": zod.coerce.string()
+})
+
+
+
+
+
+export const UpdateManagementActionDetailsBody = zod.object({
+  "target": zod.string().min(1),
+  "description": zod.string().min(1),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent'])
+})
+
+export const UpdateManagementActionDetailsResponse = zod.object({
+  "id": zod.string(),
+  "projectId": zod.string(),
+  "projectName": zod.string(),
+  "actionType": zod.enum(['feature_request', 'create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "target": zod.string(),
+  "description": zod.string(),
+  "requestedBy": zod.string(),
+  "approver": zod.string(),
+  "status": zod.enum(['not_started', 'in_progress', 'road_block', 'approved', 'rejected']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "dueDate": zod.coerce.date().nullable(),
+  "submittedAt": zod.coerce.date(),
+  "decidedAt": zod.coerce.date().nullable(),
+  "decisionNote": zod.string().nullable(),
+  "attachmentObjectPath": zod.string().nullable(),
+  "attachmentFileName": zod.string().nullable(),
+  "attachmentMimeType": zod.string().nullable(),
+  "attachmentSize": zod.number().int().nullable()
+})
+
+
+/**
  * @summary Use AI to draft an action's fields from a one-line request
  */
 export const draftManagementActionBodyPromptMax = 2000;

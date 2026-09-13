@@ -434,6 +434,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ManagementAction"
+    delete:
+      operationId: deleteManagementAction
+      tags: [management]
+      summary: Delete a project management action
+      parameters:
+        - $ref: "#/components/parameters/ActionId"
+      responses:
+        "204":
+          description: Management action deleted
+        "404":
+          description: Management action not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /management-actions/{actionId}/details:
+    patch:
+      operationId: updateManagementActionDetails
+      tags: [management]
+      summary: Edit a project management action
+      parameters:
+        - $ref: "#/components/parameters/ActionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManagementActionUpdate"
+      responses:
+        "200":
+          description: Updated project management action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagementAction"
+        "404":
+          description: Management action not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /management-actions/ai-draft:
     post:
       operationId: draftManagementAction
@@ -863,6 +904,15 @@ components:
           enum: [not_started, in_progress, road_block, approved, rejected]
         note: { type: string, maxLength: 500 }
       required: [decision]
+    ManagementActionUpdate:
+      type: object
+      properties:
+        target: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+      required: [target, description, priority]
     ManagementActionAiDraftInput:
       type: object
       properties:

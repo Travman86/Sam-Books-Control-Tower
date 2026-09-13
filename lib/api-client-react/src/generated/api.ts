@@ -39,6 +39,7 @@ import type {
   ManagementActionAiDraftInput,
   ManagementActionDecision,
   ManagementActionInput,
+  ManagementActionUpdate,
   NotFoundResponse,
   Project,
   ProjectInput,
@@ -1756,6 +1757,149 @@ export const useDecideManagementAction = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDecideManagementActionMutationOptions(options));
+    }
+
+export const getDeleteManagementActionUrl = (actionId: string,) => {
+
+
+
+
+  return `/api/management-actions/${actionId}`
+}
+
+/**
+ * @summary Delete a project management action
+ */
+export const deleteManagementAction = async (actionId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteManagementActionUrl(actionId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteManagementActionMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteManagementAction>>, TError,{actionId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteManagementAction>>, TError,{actionId: string}, TContext> => {
+
+const mutationKey = ['deleteManagementAction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteManagementAction>>, {actionId: string}> = (props) => {
+          const {actionId} = props ?? {};
+
+          return  deleteManagementAction(actionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteManagementActionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteManagementAction>>>
+
+    export type DeleteManagementActionMutationError = ErrorType<Error>
+
+    /**
+ * @summary Delete a project management action
+ */
+export const useDeleteManagementAction = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteManagementAction>>, TError,{actionId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteManagementAction>>,
+        TError,
+        {actionId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteManagementActionMutationOptions(options));
+    }
+
+export const getUpdateManagementActionDetailsUrl = (actionId: string,) => {
+
+
+
+
+  return `/api/management-actions/${actionId}/details`
+}
+
+/**
+ * @summary Edit a project management action
+ */
+export const updateManagementActionDetails = async (actionId: string,
+    managementActionUpdate: ManagementActionUpdate, options?: Parameters<typeof customFetch>[1]): Promise<ManagementAction> => {
+
+  return customFetch<ManagementAction>(getUpdateManagementActionDetailsUrl(actionId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(managementActionUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateManagementActionDetailsMutationOptions = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateManagementActionDetails>>, TError,{actionId: string;data: BodyType<ManagementActionUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateManagementActionDetails>>, TError,{actionId: string;data: BodyType<ManagementActionUpdate>}, TContext> => {
+
+const mutationKey = ['updateManagementActionDetails'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateManagementActionDetails>>, {actionId: string;data: BodyType<ManagementActionUpdate>}> = (props) => {
+          const {actionId,data} = props ?? {};
+
+          return  updateManagementActionDetails(actionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateManagementActionDetailsMutationResult = NonNullable<Awaited<ReturnType<typeof updateManagementActionDetails>>>
+    export type UpdateManagementActionDetailsMutationBody = BodyType<ManagementActionUpdate>
+    export type UpdateManagementActionDetailsMutationError = ErrorType<Error>
+
+    /**
+ * @summary Edit a project management action
+ */
+export const useUpdateManagementActionDetails = <TError = ErrorType<Error>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateManagementActionDetails>>, TError,{actionId: string;data: BodyType<ManagementActionUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateManagementActionDetails>>,
+        TError,
+        {actionId: string;data: BodyType<ManagementActionUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateManagementActionDetailsMutationOptions(options));
     }
 
 export const getDraftManagementActionUrl = () => {

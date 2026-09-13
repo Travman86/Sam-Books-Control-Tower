@@ -334,6 +334,24 @@ export interface ManagementActionDecision {
   note?: string;
 }
 
+export type ManagementActionUpdatePriority = typeof ManagementActionUpdatePriority[keyof typeof ManagementActionUpdatePriority];
+
+
+export const ManagementActionUpdatePriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  urgent: 'urgent',
+} as const;
+
+export interface ManagementActionUpdate {
+  /** @minLength 1 */
+  target: string;
+  /** @minLength 1 */
+  description: string;
+  priority: ManagementActionUpdatePriority;
+}
+
 export interface ManagementActionAiDraftInput {
   /**
      * @minLength 1

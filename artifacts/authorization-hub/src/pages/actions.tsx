@@ -8,7 +8,9 @@ import {
   useListProjects,
   useCreateManagementAction,
   useDecideManagementAction,
+  useDeleteManagementAction,
   useDraftManagementAction,
+  useUpdateManagementActionDetails,
   getListManagementActionsQueryKey,
   getGetDashboardQueryKey,
   getListActivityQueryKey,
@@ -22,9 +24,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, ArrowRight, Clock, Filter, Sparkles, Loader2, LayoutList, FileUp, X } from "lucide-react"
+import { Plus, ArrowRight, Clock, Filter, Sparkles, Loader2, LayoutList, FileUp, X, Pencil, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
@@ -108,6 +120,11 @@ export default function Actions() {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [attachment, setAttachment] = React.useState<{ file: File; upload: UploadResponse } | null>(null)
   const [attachmentErrorMessage, setAttachmentErrorMessage] = React.useState<string | null>(null)
+  const [editingAction, setEditingAction] = React.useState<ManagementAction | null>(null)
+  const [deletingAction, setDeletingAction] = React.useState<ManagementAction | null>(null)
+  const [editTarget, setEditTarget] = React.useState("")
+  const [editDescription, setEditDescription] = React.useState("")
+  const [editPriority, setEditPriority] = React.useState<ManagementAction["priority"]>("medium")
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const upload = useUpload()
 
@@ -119,6 +136,8 @@ export default function Actions() {
   const queryClient = useQueryClient()
   const createAction = useCreateManagementAction()
   const decideAction = useDecideManagementAction()
+  const updateAction = useUpdateManagementActionDetails()
+  const deleteAction = useDeleteManagementAction()
   const draftAction = useDraftManagementAction()
   const { toast } = useToast()
 
@@ -217,6 +236,68 @@ export default function Actions() {
         onError: (err) => {
           toast({
             title: "Could not update",
+            description: err instanceof Error ? err.message : "Try again.",
+            variant: "destructive",
+          })
+        },
+      },
+    )
+  }
+
+  const invalidateActionQueries = () => {
+    queryClient.invalidateQueries({ queryKey: getListManagementActionsQueryKey() })
+    queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() })
+    queryClient.invalidateQueries({ queryKey: getListActivityQueryKey() })
+  }
+
+  const openEditDialog = (action: ManagementAction) => {
+    setEditingAction(action)
+    setEditTarget(action.target)
+    setEditDescription(action.description)
+    setEditPriority(action.priority)
+  }
+
+  const saveEdit = () => {
+    if (!editingAction || !editTarget.trim() || !editDescription.trim()) return
+    updateAction.mutate(
+      {
+        actionId: editingAction.id,
+        data: {
+          target: editTarget.trim(),
+          description: editDescription.trim(),
+          priority: editPriority,
+        },
+      },
+      {
+        onSuccess: () => {
+          invalidateActionQueries()
+          setEditingAction(null)
+          toast({ title: "Action updated", description: "Your changes have been saved." })
+        },
+        onError: (err) => {
+          toast({
+            title: "Could not update action",
+            description: err instanceof Error ? err.message : "Try again.",
+            variant: "destructive",
+          })
+        },
+      },
+    )
+  }
+
+  const confirmDelete = () => {
+    if (!deletingAction) return
+    deleteAction.mutate(
+      { actionId: deletingAction.id },
+      {
+        onSuccess: () => {
+          invalidateActionQueries()
+          setDeletingAction(null)
+          toast({ title: "Action deleted", description: "The management action has been removed." })
+        },
+        onError: (err) => {
+          toast({
+            title: "Could not delete action",
             description: err instanceof Error ? err.message : "Try again.",
             variant: "destructive",
           })
@@ -515,7 +596,7 @@ export default function Actions() {
               <div className="w-[100px]">Priority</div>
               <div className="w-[150px]">Status</div>
               <div className="w-[130px]">Requested</div>
-              <div className="w-[48px]" />
+              <div className="w-[112px]">Actions</div>
             </div>
 
             {isLoading ? (
@@ -541,10 +622,17 @@ export default function Actions() {
                       className="flex items-center gap-3 px-4 py-2.5 border-b border-border/40 bg-background transition-colors hover:bg-muted/30 group"
                     >
                                   {/* Target & Desc */}
-                                  <div className="flex-1 min-w-[200px] flex flex-col pr-4">
-                                    <span className="text-sm font-semibold text-foreground truncate">{action.target}</span>
-                                    <span className="text-[11px] font-medium text-muted-foreground/70 truncate mt-0.5">{action.description}</span>
-                                  </div>
+                                  <Link
+                                    href={`/actions/${action.id}`}
+                                    className="flex-1 min-w-[200px] flex flex-col pr-4 rounded-sm outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/40"
+                                  >
+                                    <span className="text-sm font-semibold text-foreground truncate transition-colors group-hover:text-primary">
+                                      {action.target}
+                                    </span>
+                                    <span className="text-[11px] font-medium text-muted-foreground/70 truncate mt-0.5">
+                                      {action.description}
+                                    </span>
+                                  </Link>
 
                                   {/* Project */}
                                   <div className="w-[140px] pr-2 flex items-center">
@@ -604,8 +692,28 @@ export default function Actions() {
                                     <span className="truncate">{formatDistanceToNow(new Date(action.submittedAt), { addSuffix: true })}</span>
                                   </div>
 
-                                  {/* Action Link */}
-                                  <div className="w-[48px] flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {/* Row Actions */}
+                                  <div className="w-[112px] flex justify-end gap-1">
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                      aria-label={`Edit ${action.target}`}
+                                      onClick={() => openEditDialog(action)}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                      aria-label={`Delete ${action.target}`}
+                                      onClick={() => setDeletingAction(action)}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
                                     <Link href={`/actions/${action.id}`} className="flex items-center justify-center h-8 w-8 rounded hover:bg-primary/10 hover:text-primary text-muted-foreground transition-colors focus:opacity-100 outline-none focus-visible:ring-1 focus-visible:ring-primary">
                                       <ArrowRight className="w-4 h-4" />
                                     </Link>
@@ -618,6 +726,68 @@ export default function Actions() {
           </div>
         </div>
       </div>
+
+      <Dialog open={Boolean(editingAction)} onOpenChange={(open) => !open && setEditingAction(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Management Action</DialogTitle>
+            <DialogDescription>Update the action name, description, or priority.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="edit-action-target" className="text-sm font-medium">Action</label>
+              <Input id="edit-action-target" value={editTarget} onChange={(event) => setEditTarget(event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="edit-action-description" className="text-sm font-medium">Description</label>
+              <Textarea id="edit-action-description" value={editDescription} onChange={(event) => setEditDescription(event.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Priority</label>
+              <Select value={editPriority} onValueChange={(value) => setEditPriority(value as ManagementAction["priority"])}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setEditingAction(null)}>Cancel</Button>
+            <Button
+              type="button"
+              onClick={saveEdit}
+              disabled={updateAction.isPending || !editTarget.trim() || !editDescription.trim()}
+            >
+              {updateAction.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={Boolean(deletingAction)} onOpenChange={(open) => !open && setDeletingAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this action?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{deletingAction?.target}” will be permanently removed. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteAction.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteAction.isPending ? "Deleting..." : "Delete Action"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
