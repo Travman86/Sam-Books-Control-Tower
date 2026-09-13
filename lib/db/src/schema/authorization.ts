@@ -88,5 +88,9 @@ export const managementActionsTable = pgTable(
       .defaultNow(),
     decidedAt: timestamp("decided_at", { withTimezone: true }),
     decisionNote: text("decision_note"),
+    attachmentObjectPath: text("attachment_object_path"),
+    attachmentFileName: text("attachment_file_name"),
+    attachmentMimeType: text("attachment_mime_type"),
+    attachmentSize: integer("attachment_size"),
   },
 );

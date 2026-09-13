@@ -22,4 +22,15 @@ export interface ManagementActionInput {
   priority: ManagementActionInputPriority;
   /** @nullable */
   dueDate?: Date | null;
+  /** @nullable */
+  attachmentObjectPath?: string | null;
+  /** @nullable */
+  attachmentFileName?: string | null;
+  /** @nullable */
+  attachmentMimeType?: string | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  attachmentSize?: number | null;
 }

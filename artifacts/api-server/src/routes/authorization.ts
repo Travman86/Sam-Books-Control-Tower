@@ -42,6 +42,50 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+const ATTACHMENT_EXTENSIONS: Record<string, string[]> = {
+  "application/pdf": [".pdf"],
+  "application/msword": [".doc"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+  "application/vnd.ms-excel": [".xls"],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+  "text/csv": [".csv"],
+  "text/plain": [".txt", ".text"],
+  "image/png": [".png"],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/webp": [".webp"],
+  "image/gif": [".gif"],
+};
+
+function validateAttachment(data: {
+  attachmentObjectPath?: string | null;
+  attachmentFileName?: string | null;
+  attachmentMimeType?: string | null;
+  attachmentSize?: number | null;
+}): string | null {
+  const values = [
+    data.attachmentObjectPath,
+    data.attachmentFileName,
+    data.attachmentMimeType,
+    data.attachmentSize,
+  ];
+  if (values.every((value) => value == null)) return null;
+  if (values.some((value) => value == null)) return "Attachment metadata is incomplete.";
+  if (!/^\/objects\/uploads\/[a-z0-9-]+$/i.test(data.attachmentObjectPath!)) {
+    return "Attachment object path must be a private storage path.";
+  }
+  if (data.attachmentSize! < 1 || data.attachmentSize! > MAX_ATTACHMENT_SIZE) {
+    return "Attachments must be 10 MiB or smaller.";
+  }
+  const extensions = ATTACHMENT_EXTENSIONS[data.attachmentMimeType!.toLowerCase()];
+  if (!extensions) return "This attachment type is not supported.";
+  const fileName = data.attachmentFileName!;
+  const extension = fileName.toLowerCase().slice(fileName.lastIndexOf("."));
+  if (!extensions.includes(extension)) {
+    return "The attachment filename extension does not match its type.";
+  }
+  return null;
+}
 
 async function projectView(project: typeof projectsTable.$inferSelect) {
   const features = await db
@@ -403,6 +447,11 @@ router.post("/management-actions", async (req, res): Promise<void> => {
   const parsed = CreateManagementActionBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const attachmentError = validateAttachment(parsed.data);
+  if (attachmentError) {
+    res.status(400).json({ error: attachmentError });
     return;
   }
   const [project] = await db

@@ -25,10 +25,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, ArrowRight, Clock, Filter, Sparkles, Loader2, GripVertical, CheckCircle2, CircleDashed, XCircle, LayoutList } from "lucide-react"
+import { Plus, ArrowRight, Clock, Filter, Sparkles, Loader2, GripVertical, CheckCircle2, CircleDashed, XCircle, LayoutList, FileUp, X } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { useUpload, type UploadResponse } from "@workspace/object-storage-web"
 
 const COLUMNS = [
   { id: "pending", label: "Pending", icon: CircleDashed },
@@ -76,10 +77,44 @@ const actionSchema = z.object({
 })
 type ActionFormValues = z.infer<typeof actionSchema>
 
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
+const ATTACHMENT_TYPES: Record<string, string[]> = {
+  "application/pdf": [".pdf"],
+  "application/msword": [".doc"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+  "application/vnd.ms-excel": [".xls"],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+  "text/csv": [".csv"],
+  "text/plain": [".txt", ".text"],
+  "image/png": [".png"],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/webp": [".webp"],
+  "image/gif": [".gif"],
+}
+
+function attachmentError(file: File): string | null {
+  if (file.size > MAX_ATTACHMENT_SIZE) return "Files must be 10 MiB or smaller."
+  const extensions = ATTACHMENT_TYPES[file.type]
+  const extension = file.name.toLowerCase().slice(file.name.lastIndexOf("."))
+  if (!extensions || !extensions.includes(extension)) return "Choose a supported document or image with a matching extension."
+  return null
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export default function Actions() {
   const [projectFilter, setProjectFilter] = React.useState<string>("")
   const [isProposeOpen, setIsProposeOpen] = React.useState(false)
   const [aiPrompt, setAiPrompt] = React.useState("")
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
+  const [attachment, setAttachment] = React.useState<{ file: File; upload: UploadResponse } | null>(null)
+  const [attachmentErrorMessage, setAttachmentErrorMessage] = React.useState<string | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const upload = useUpload()
 
   const { data: actions, isLoading } = useListManagementActions({
     projectId: projectFilter || undefined,
@@ -129,9 +164,37 @@ export default function Actions() {
     )
   }
 
+  const resetAttachment = () => {
+    setSelectedFile(null)
+    setAttachment(null)
+    setAttachmentErrorMessage(null)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const chooseAttachment = async (file: File) => {
+    const error = attachmentError(file)
+    if (error) {
+      setSelectedFile(null)
+      setAttachment(null)
+      setAttachmentErrorMessage(error)
+      return
+    }
+    setSelectedFile(file)
+    setAttachmentErrorMessage(null)
+    const uploaded = await upload.uploadFile(file)
+    if (uploaded) setAttachment({ file, upload: uploaded })
+  }
+
   const onSubmit = (data: ActionFormValues) => {
     createAction.mutate(
-      { data: { ...data, dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null } },
+      { data: {
+        ...data,
+        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+        attachmentObjectPath: attachment?.upload.objectPath ?? null,
+        attachmentFileName: attachment?.file.name ?? null,
+        attachmentMimeType: attachment?.file.type ?? null,
+        attachmentSize: attachment?.file.size ?? null,
+      } },
       {
         onSuccess: () => {
           toast({ title: "Proposal submitted", description: "The management action was successfully proposed." })
@@ -141,6 +204,7 @@ export default function Actions() {
           queryClient.invalidateQueries({ queryKey: getListActivityQueryKey() })
           setAiPrompt("")
           form.reset()
+          resetAttachment()
         },
       },
     )
@@ -185,7 +249,10 @@ export default function Actions() {
           </p>
         </div>
 
-        <Dialog open={isProposeOpen} onOpenChange={setIsProposeOpen}>
+        <Dialog open={isProposeOpen} onOpenChange={(open) => {
+          setIsProposeOpen(open)
+          if (!open) resetAttachment()
+        }}>
           <DialogTrigger asChild>
             <Button className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
               <Plus className="mr-2 h-4 w-4" /> Propose Action
@@ -354,9 +421,72 @@ export default function Actions() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <FormLabel>Attachment (optional)</FormLabel>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="sr-only"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.text,.png,.jpg,.jpeg,.webp,.gif"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0]
+                      if (file) void chooseAttachment(file)
+                    }}
+                  />
+                  {!selectedFile ? (
+                    <button
+                      type="button"
+                      className="w-full rounded-lg border border-dashed border-border bg-muted/20 p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/5"
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault()
+                        const file = event.dataTransfer.files[0]
+                        if (file) void chooseAttachment(file)
+                      }}
+                    >
+                      <span className="flex items-center gap-3">
+                        <FileUp className="h-5 w-5 text-muted-foreground" />
+                        <span>
+                          <span className="block text-sm font-medium">Choose or drop a file</span>
+                          <span className="block text-xs text-muted-foreground">Documents and images up to 10 MiB</span>
+                        </span>
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-lg border bg-muted/20 p-3">
+                      <FileUp className="h-5 w-5 shrink-0 text-primary" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{selectedFile.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatBytes(selectedFile.size)} · {selectedFile.type}</p>
+                        {upload.isUploading && <p className="text-xs text-primary">Uploading {upload.progress}%</p>}
+                        {!upload.isUploading && attachment && <p className="text-xs text-primary">Ready to attach</p>}
+                      </div>
+                      <Button type="button" size="icon" variant="ghost" aria-label="Remove attachment" onClick={resetAttachment}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                        Replace
+                      </Button>
+                    </div>
+                  )}
+                  {(attachmentErrorMessage || upload.error) && (
+                    <p className="text-xs text-destructive">{attachmentErrorMessage ?? upload.error?.message}</p>
+                  )}
+                </div>
+
                 <DialogFooter className="pt-4 border-t border-border/40 mt-4">
-                  <Button type="button" variant="ghost" onClick={() => setIsProposeOpen(false)}>Cancel</Button>
-                  <Button type="submit" disabled={createAction.isPending} className="shadow-sm">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      resetAttachment()
+                      setIsProposeOpen(false)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createAction.isPending || upload.isUploading || Boolean(attachmentErrorMessage) || Boolean(upload.error) || Boolean(selectedFile && !attachment)} className="shadow-sm">
                     {createAction.isPending ? "Submitting..." : "Submit Proposal"}
                   </Button>
                 </DialogFooter>

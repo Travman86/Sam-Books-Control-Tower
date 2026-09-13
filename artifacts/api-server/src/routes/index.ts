@@ -4,6 +4,7 @@ import authRouter from "./auth";
 import authorizationRouter from "./authorization";
 import samBooksRouter from "./sam-books";
 import aiRouter from "./ai";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(authRouter);
 router.use(authorizationRouter);
 router.use(samBooksRouter);
 router.use(aiRouter);
+router.use(storageRouter);
 
 export default router;

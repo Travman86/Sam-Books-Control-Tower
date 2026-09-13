@@ -12,9 +12,15 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Clock, ShieldCheck, ShieldAlert, Check, X, FileText, Calendar, User } from "lucide-react"
+import { ArrowLeft, Clock, ShieldCheck, ShieldAlert, Check, X, FileText, Calendar, User, Paperclip, ExternalLink } from "lucide-react"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
+
+function formatAttachmentSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 export default function ActionDetail({ params }: { params: { id: string } }) {
   const { id } = params
@@ -94,6 +100,33 @@ export default function ActionDetail({ params }: { params: { id: string } }) {
               </div>
             </CardContent>
           </Card>
+
+          {action.attachmentObjectPath && action.attachmentFileName && action.attachmentMimeType && action.attachmentSize != null && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Paperclip className="h-4 w-4" /> Attachment
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <a
+                  href={`/api/storage${action.attachmentObjectPath}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 rounded-md border bg-muted/20 p-3 transition-colors hover:bg-muted/40"
+                >
+                  <FileText className="h-5 w-5 shrink-0 text-primary" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{action.attachmentFileName}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {formatAttachmentSize(action.attachmentSize)} · {action.attachmentMimeType}
+                    </span>
+                  </span>
+                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </a>
+              </CardContent>
+            </Card>
+          )}
 
           {action.status !== 'pending' && (
             <Card className={action.status === 'approved' ? 'border-green-500/30 bg-green-500/5' : 'border-destructive/30 bg-destructive/5'}>

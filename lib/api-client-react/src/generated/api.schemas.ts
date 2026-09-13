@@ -232,6 +232,14 @@ export interface ManagementAction {
   decidedAt: string | null;
   /** @nullable */
   decisionNote: string | null;
+  /** @nullable */
+  attachmentObjectPath: string | null;
+  /** @nullable */
+  attachmentFileName: string | null;
+  /** @nullable */
+  attachmentMimeType: string | null;
+  /** @nullable */
+  attachmentSize: number | null;
 }
 
 export type ManagementActionInputActionType = typeof ManagementActionInputActionType[keyof typeof ManagementActionInputActionType];
@@ -272,6 +280,39 @@ export interface ManagementActionInput {
   priority: ManagementActionInputPriority;
   /** @nullable */
   dueDate?: string | null;
+  /** @nullable */
+  attachmentObjectPath?: string | null;
+  /** @nullable */
+  attachmentFileName?: string | null;
+  /** @nullable */
+  attachmentMimeType?: string | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  attachmentSize?: number | null;
+}
+
+export interface AttachmentMetadata {
+  objectPath: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+}
+
+export interface UploadUrlRequest {
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @minLength 1 */
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata: UploadUrlRequest;
 }
 
 export type ManagementActionDecisionDecision = typeof ManagementActionDecisionDecision[keyof typeof ManagementActionDecisionDecision];

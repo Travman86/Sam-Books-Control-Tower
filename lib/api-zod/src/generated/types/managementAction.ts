@@ -27,4 +27,12 @@ export interface ManagementAction {
   decidedAt: Date | null;
   /** @nullable */
   decisionNote: string | null;
+  /** @nullable */
+  attachmentObjectPath: string | null;
+  /** @nullable */
+  attachmentFileName: string | null;
+  /** @nullable */
+  attachmentMimeType: string | null;
+  /** @nullable */
+  attachmentSize: number | null;
 }

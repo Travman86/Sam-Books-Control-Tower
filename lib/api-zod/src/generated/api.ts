@@ -355,7 +355,11 @@ export const ListManagementActionsResponseItem = zod.object({
   "dueDate": zod.coerce.date().nullable(),
   "submittedAt": zod.coerce.date(),
   "decidedAt": zod.coerce.date().nullable(),
-  "decisionNote": zod.string().nullable()
+  "decisionNote": zod.string().nullable(),
+  "attachmentObjectPath": zod.string().nullable(),
+  "attachmentFileName": zod.string().nullable(),
+  "attachmentMimeType": zod.string().nullable(),
+  "attachmentSize": zod.number().int().nullable()
 })
 export const ListManagementActionsResponse = zod.array(ListManagementActionsResponseItem)
 
@@ -363,6 +367,7 @@ export const ListManagementActionsResponse = zod.array(ListManagementActionsResp
 /**
  * @summary Propose a project management action for approval
  */
+
 
 
 
@@ -377,7 +382,11 @@ export const CreateManagementActionBody = zod.object({
   "requestedBy": zod.string().min(1),
   "approver": zod.string().min(1),
   "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
-  "dueDate": zod.coerce.date().nullish()
+  "dueDate": zod.coerce.date().nullish(),
+  "attachmentObjectPath": zod.string().nullish(),
+  "attachmentFileName": zod.string().nullish(),
+  "attachmentMimeType": zod.string().nullish(),
+  "attachmentSize": zod.number().int().min(1).nullish()
 })
 
 export const CreateManagementActionResponse = zod.object({
@@ -394,8 +403,64 @@ export const CreateManagementActionResponse = zod.object({
   "dueDate": zod.coerce.date().nullable(),
   "submittedAt": zod.coerce.date(),
   "decidedAt": zod.coerce.date().nullable(),
-  "decisionNote": zod.string().nullable()
+  "decisionNote": zod.string().nullable(),
+  "attachmentObjectPath": zod.string().nullable(),
+  "attachmentFileName": zod.string().nullable(),
+  "attachmentMimeType": zod.string().nullable(),
+  "attachmentSize": zod.number().int().nullable()
 })
+
+
+/**
+ * Returns a presigned GCS URL for direct upload. The client sends JSON
+ * metadata here, then uploads the file directly to the returned URL.
+ * @summary Request a presigned URL for file upload
+ */
+
+
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().int().min(1),
+  "contentType": zod.string().min(1)
+})
+
+
+
+
+
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().url(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().int().min(1),
+  "contentType": zod.string().min(1)
+})
+})
+
+
+/**
+ * @summary Serve a public asset from PUBLIC_OBJECT_SEARCH_PATHS
+ */
+export const GetPublicObjectParams = zod.object({
+  "filePath": zod.coerce.string()
+})
+
+export const GetPublicObjectResponse = zod.unknown()
+
+
+/**
+ * @summary Serve a private object entity from PRIVATE_OBJECT_DIR
+ */
+export const GetStorageObjectParams = zod.object({
+  "objectPath": zod.coerce.string()
+})
+
+export const GetStorageObjectResponse = zod.unknown()
 
 
 /**
@@ -419,7 +484,11 @@ export const GetManagementActionResponse = zod.object({
   "dueDate": zod.coerce.date().nullable(),
   "submittedAt": zod.coerce.date(),
   "decidedAt": zod.coerce.date().nullable(),
-  "decisionNote": zod.string().nullable()
+  "decisionNote": zod.string().nullable(),
+  "attachmentObjectPath": zod.string().nullable(),
+  "attachmentFileName": zod.string().nullable(),
+  "attachmentMimeType": zod.string().nullable(),
+  "attachmentSize": zod.number().int().nullable()
 })
 
 
@@ -453,7 +522,11 @@ export const DecideManagementActionResponse = zod.object({
   "dueDate": zod.coerce.date().nullable(),
   "submittedAt": zod.coerce.date(),
   "decidedAt": zod.coerce.date().nullable(),
-  "decisionNote": zod.string().nullable()
+  "decisionNote": zod.string().nullable(),
+  "attachmentObjectPath": zod.string().nullable(),
+  "attachmentFileName": zod.string().nullable(),
+  "attachmentMimeType": zod.string().nullable(),
+  "attachmentSize": zod.number().int().nullable()
 })
 
 

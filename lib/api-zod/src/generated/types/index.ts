@@ -8,6 +8,7 @@
 
 export * from './activity';
 export * from './activityKind';
+export * from './attachmentMetadata';
 export * from './authStatus';
 export * from './dashboardSummary';
 export * from './error';
@@ -79,4 +80,6 @@ export * from './samBooksProject';
 export * from './samBooksProjectLatestRun';
 export * from './samBooksQueueMetric';
 export * from './samBooksQueueWindow';
+export * from './uploadUrlRequest';
+export * from './uploadUrlResponse';
 export * from './upstreamUnavailableResponse';
