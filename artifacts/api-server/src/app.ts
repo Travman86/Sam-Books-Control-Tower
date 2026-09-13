@@ -42,13 +42,25 @@ if (!sessionSecret) {
   throw new Error("SESSION_SECRET environment variable is required.");
 }
 
+const sessionStore = new PgStore({
+  conString: process.env["DATABASE_URL"],
+  // Created by hand (see the SQL in the deploy notes) rather than
+  // auto-created here — createTableIfMissing races its own existence check
+  // against the very first session write on cold start, which can silently
+  // drop that write (login "succeeds" but nothing actually persists).
+  createTableIfMissing: false,
+  tableName: "session",
+});
+// A store-level write/read failure (e.g. the table above not existing yet)
+// would otherwise be an unhandled 'error' event — surface it in the logs
+// instead of it disappearing while a login silently doesn't persist.
+sessionStore.on("error", (err) => {
+  logger.error({ err }, "Session store error");
+});
+
 app.use(
   session({
-    store: new PgStore({
-      conString: process.env["DATABASE_URL"],
-      createTableIfMissing: true,
-      tableName: "session",
-    }),
+    store: sessionStore,
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
