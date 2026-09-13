@@ -497,6 +497,117 @@ export const ListSamBooksProjectsResponse = zod.array(ListSamBooksProjectsRespon
 
 
 /**
+ * @summary Sam Books feature-request detail
+ */
+export const GetSamBooksFeatureRequestParams = zod.object({
+  "featureRequestId": zod.coerce.number().int()
+})
+
+export const GetSamBooksFeatureRequestResponse = zod.object({
+  "id": zod.number().int(),
+  "title": zod.string(),
+  "problem": zod.string(),
+  "outcome": zod.string(),
+  "requirements": zod.array(zod.string()),
+  "status": zod.string(),
+  "changeScope": zod.string(),
+  "organization": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string()
+}),
+  "module": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string()
+}),
+  "requester": zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "email": zod.string().nullable()
+}),
+  "wireframes": zod.array(zod.object({
+  "id": zod.number().int(),
+  "version": zod.number().int(),
+  "content": zod.string(),
+  "createdAt": zod.coerce.date()
+})),
+  "decisions": zod.array(zod.object({
+  "id": zod.number().int(),
+  "decision": zod.string(),
+  "comment": zod.string().nullable(),
+  "wireframeVersion": zod.number().int().nullable(),
+  "decidedBy": zod.string(),
+  "createdAt": zod.coerce.date()
+})),
+  "audit": zod.array(zod.object({
+  "id": zod.number().int(),
+  "action": zod.string(),
+  "actor": zod.string(),
+  "createdAt": zod.coerce.date()
+})),
+  "submittedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Approve, reject, or request changes on a Sam Books feature request
+ */
+export const DecideSamBooksFeatureRequestParams = zod.object({
+  "featureRequestId": zod.coerce.number().int()
+})
+
+export const decideSamBooksFeatureRequestBodyCommentMax = 4000;
+
+
+
+export const DecideSamBooksFeatureRequestBody = zod.object({
+  "decision": zod.enum(['approved', 'rejected', 'changes_requested']),
+  "comment": zod.string().max(decideSamBooksFeatureRequestBodyCommentMax).optional()
+})
+
+export const DecideSamBooksFeatureRequestResponse = zod.object({
+  "id": zod.number().int(),
+  "status": zod.string()
+})
+
+
+/**
+ * @summary Sam Books agent-run detail
+ */
+export const GetSamBooksAgentRunParams = zod.object({
+  "agentRunId": zod.coerce.number().int()
+})
+
+export const GetSamBooksAgentRunResponse = zod.object({
+  "id": zod.number().int(),
+  "organizationId": zod.number().int(),
+  "moduleId": zod.number().int(),
+  "requestId": zod.number().int().nullable(),
+  "status": zod.string(),
+  "changeScope": zod.string(),
+  "prompt": zod.string(),
+  "summary": zod.string().nullable(),
+  "error": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "startedAt": zod.coerce.date().nullable(),
+  "completedAt": zod.coerce.date().nullable(),
+  "events": zod.array(zod.object({
+  "id": zod.number().int(),
+  "type": zod.string(),
+  "message": zod.string(),
+  "createdAt": zod.coerce.date()
+})),
+  "checks": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "status": zod.string(),
+  "output": zod.string()
+}))
+})
+
+
+/**
  * @summary Sam Books feature-request approval queue
  */
 export const listSamBooksFeatureRequestsQueryStatusDefault = `submitted`;

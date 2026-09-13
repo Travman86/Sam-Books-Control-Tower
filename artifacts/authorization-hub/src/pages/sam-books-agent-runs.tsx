@@ -1,5 +1,6 @@
 import * as React from "react"
 import { useState } from "react"
+import { Link } from "wouter"
 import { useListSamBooksAgentRuns } from "@workspace/api-client-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -51,8 +52,10 @@ export default function SamBooksAgentRuns() {
                 </TableRow>
               ) : (
                 agentRuns.data!.map((run) => (
-                  <TableRow key={run.id}>
-                    <TableCell className="font-medium">{run.moduleName}</TableCell>
+                  <TableRow key={run.id} className="cursor-pointer hover:bg-muted/40">
+                    <TableCell className="font-medium">
+                      <Link href={`/sam-books/agent-runs/${run.id}`} className="hover:underline">{run.moduleName}</Link>
+                    </TableCell>
                     <TableCell>{run.organizationName}</TableCell>
                     <TableCell><StatusBadge status={run.status} /></TableCell>
                     <TableCell>{run.checksPassed}/{run.checksTotal}</TableCell>

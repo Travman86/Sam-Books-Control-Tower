@@ -1,5 +1,6 @@
 import * as React from "react"
 import { useState } from "react"
+import { Link } from "wouter"
 import { useListSamBooksFeatureRequests } from "@workspace/api-client-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -51,8 +52,10 @@ export default function SamBooksApprovals() {
                 </TableRow>
               ) : (
                 featureRequests.data!.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.title}</TableCell>
+                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/40">
+                    <TableCell className="font-medium">
+                      <Link href={`/sam-books/approvals/${r.id}`} className="hover:underline">{r.title}</Link>
+                    </TableCell>
                     <TableCell>{r.moduleName}</TableCell>
                     <TableCell>{r.organizationName}</TableCell>
                     <TableCell>{r.requester.name}</TableCell>
@@ -65,10 +68,7 @@ export default function SamBooksApprovals() {
           </Table>
         </CardContent>
       </Card>
-      <p className="text-xs text-muted-foreground">
-        Read-only for now — approve or reject a request from Sam Books' own Control Tower (
-        <code className="font-mono">/control/approvals</code>).
-      </p>
+      <p className="text-xs text-muted-foreground">Click a request to review it and record a decision.</p>
     </div>
   )
 }

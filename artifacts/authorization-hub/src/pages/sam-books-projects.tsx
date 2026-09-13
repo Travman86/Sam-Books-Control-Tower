@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "wouter"
 import { useListSamBooksProjects } from "@workspace/api-client-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +22,8 @@ export default function SamBooksProjects() {
               <TableRow>
                 <TableHead>Module</TableHead>
                 <TableHead>Organization</TableHead>
+                <TableHead>Revision</TableHead>
+                <TableHead>Created</TableHead>
                 <TableHead>Open requests</TableHead>
                 <TableHead>Awaiting approval</TableHead>
                 <TableHead>Latest run</TableHead>
@@ -29,11 +32,11 @@ export default function SamBooksProjects() {
             <TableBody>
               {projects.isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">Loading…</TableCell>
+                  <TableCell colSpan={7} className="h-24 text-center">Loading…</TableCell>
                 </TableRow>
               ) : (projects.data?.length ?? 0) === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No custom modules yet.</TableCell>
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No custom modules yet.</TableCell>
                 </TableRow>
               ) : (
                 projects.data!.map((p) => (
@@ -45,8 +48,18 @@ export default function SamBooksProjects() {
                       )}
                     </TableCell>
                     <TableCell>{p.organizationName}</TableCell>
+                    <TableCell>{p.currentRevision}</TableCell>
+                    <TableCell>{new Date(p.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>{p.openRequests}</TableCell>
-                    <TableCell>{p.awaitingApproval > 0 ? <Badge variant="warning">{p.awaitingApproval}</Badge> : "0"}</TableCell>
+                    <TableCell>
+                      {p.awaitingApproval > 0 ? (
+                        <Link href="/sam-books/approvals" className="inline-block">
+                          <Badge variant="warning">{p.awaitingApproval}</Badge>
+                        </Link>
+                      ) : (
+                        "0"
+                      )}
+                    </TableCell>
                     <TableCell>{p.latestRun ? <StatusBadge status={p.latestRun.status} /> : "—"}</TableCell>
                   </TableRow>
                 ))

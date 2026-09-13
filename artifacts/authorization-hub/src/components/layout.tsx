@@ -16,25 +16,27 @@ import {
   ListTodo,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Menu,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 /**
  * This app IS the Sam Books Control Tower — a cross-project back-office, not
- * just a code-authorization tool. The sidebar reflects that: a "Sam Books"
- * group for the live operational view (proxied from the connected Sam Books
- * instance, see pages/sam-books-*.tsx) sits above the "Authorization" group,
- * which is this app's own project/feature governance workflow.
+ * just a code-authorization tool. "Sam Books" is a single expandable nav
+ * item holding the live operational view (proxied from the connected Sam
+ * Books instance, see pages/sam-books-*.tsx); "Authorization" below it is
+ * this app's own project/feature governance workflow.
  */
 
 const SAM_BOOKS_NAV = [
-  { href: "/sam-books", label: "Overview", icon: LayoutGrid, exact: true },
-  { href: "/sam-books/projects", label: "Projects", icon: Rocket },
-  { href: "/sam-books/approvals", label: "Approvals", icon: ClipboardCheck },
-  { href: "/sam-books/agent-runs", label: "Agent runs", icon: Activity },
-  { href: "/sam-books/performance", label: "Performance", icon: Gauge },
+  { href: "/sam-books", label: "Overview", exact: true },
+  { href: "/sam-books/projects", label: "Projects" },
+  { href: "/sam-books/approvals", label: "Approvals" },
+  { href: "/sam-books/agent-runs", label: "Agent runs" },
+  { href: "/sam-books/performance", label: "Performance" },
 ]
 
 const AUTHORIZATION_NAV = [
@@ -46,10 +48,88 @@ const AUTHORIZATION_NAV = [
   { href: "/activity", label: "Activity", icon: ActivitySquare },
 ]
 
-type NavItem = { href: string; label: string; icon: React.ElementType; exact?: boolean }
+const SAM_BOOKS_SUB_ICON: Record<string, React.ElementType> = {
+  "/sam-books": LayoutGrid,
+  "/sam-books/projects": Rocket,
+  "/sam-books/approvals": ClipboardCheck,
+  "/sam-books/agent-runs": Activity,
+  "/sam-books/performance": Gauge,
+}
+
+type NavItem = { href: string; label: string; icon?: React.ElementType; exact?: boolean }
 
 function isActiveItem(location: string, item: NavItem): boolean {
   return item.exact ? location === item.href : location === item.href || location.startsWith(item.href + "/")
+}
+
+function isSamBooksActive(location: string): boolean {
+  return location === "/sam-books" || location.startsWith("/sam-books/")
+}
+
+function SamBooksNav({ location, collapsed, onNavigate }: { location: string; collapsed: boolean; onNavigate?: () => void }) {
+  const [open, setOpen] = useState(isSamBooksActive(location))
+
+  if (collapsed) {
+    // Collapsed rail: skip the expand/collapse affordance, just show the
+    // group's icon linking straight to the overview page.
+    return (
+      <Link
+        href="/sam-books"
+        title="Sam Books"
+        className={cn(
+          "flex items-center justify-center h-10 rounded-md",
+          isSamBooksActive(location) ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50",
+        )}
+      >
+        <Radar className="w-4 h-4" />
+      </Link>
+    )
+  }
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="px-3 pb-1.5 pt-4 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+        Sam Books
+      </div>
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "w-full flex items-center gap-3 h-10 px-3 rounded-md text-sm font-medium transition-colors",
+            isSamBooksActive(location)
+              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+          )}
+        >
+          <Radar className={cn("w-4 h-4 shrink-0", isSamBooksActive(location) ? "text-sidebar-primary" : "text-sidebar-foreground/50")} />
+          <span className="flex-1 text-left">Sam Books</span>
+          <ChevronDown className={cn("w-3.5 h-3.5 shrink-0 transition-transform", open && "rotate-180")} />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-0.5 pt-0.5 pl-6">
+        {SAM_BOOKS_NAV.map((item) => {
+          const active = isActiveItem(location, item)
+          const Icon = SAM_BOOKS_SUB_ICON[item.href] ?? LayoutGrid
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                "flex items-center gap-2.5 h-9 px-3 rounded-md text-sm transition-colors",
+                active
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+              )}
+            >
+              <Icon className={cn("w-3.5 h-3.5 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground/40")} />
+              {item.label}
+            </Link>
+          )
+        })}
+      </CollapsibleContent>
+    </Collapsible>
+  )
 }
 
 function NavGroup({
@@ -74,6 +154,7 @@ function NavGroup({
       )}
       {items.map((item) => {
         const active = isActiveItem(location, item)
+        const Icon = item.icon
         return (
           <Link
             key={item.href}
@@ -88,7 +169,7 @@ function NavGroup({
                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
             )}
           >
-            <item.icon className={cn("w-4 h-4 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground/50")} />
+            {Icon && <Icon className={cn("w-4 h-4 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground/50")} />}
             {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
           </Link>
         )
@@ -133,7 +214,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex flex-col h-full">
               <Brand />
               <nav className="flex-1 px-3 py-2 overflow-y-auto">
-                <NavGroup title="Sam Books" items={SAM_BOOKS_NAV} location={location} collapsed={false} onNavigate={() => setMobileOpen(false)} />
+                <SamBooksNav location={location} collapsed={false} onNavigate={() => setMobileOpen(false)} />
                 <NavGroup title="Authorization" items={AUTHORIZATION_NAV} location={location} collapsed={false} onNavigate={() => setMobileOpen(false)} />
               </nav>
             </div>
@@ -148,7 +229,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <Brand collapsed={collapsed} />
         <nav className="flex-1 px-3 py-2 overflow-y-auto">
-          <NavGroup title="Sam Books" items={SAM_BOOKS_NAV} location={location} collapsed={collapsed} />
+          <SamBooksNav location={location} collapsed={collapsed} />
           <NavGroup title="Authorization" items={AUTHORIZATION_NAV} location={location} collapsed={collapsed} />
         </nav>
         <button

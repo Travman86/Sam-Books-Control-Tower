@@ -434,6 +434,124 @@ export interface SamBooksAgentRun {
   durationSeconds: number | null;
 }
 
+export type SamBooksFeatureRequestDetailOrganization = {
+  id: number;
+  name: string;
+};
+
+export type SamBooksFeatureRequestDetailModule = {
+  id: number;
+  name: string;
+};
+
+export type SamBooksFeatureRequestDetailRequester = {
+  id: number;
+  name: string;
+  /** @nullable */
+  email: string | null;
+};
+
+export type SamBooksFeatureRequestDetailWireframesItem = {
+  id: number;
+  version: number;
+  content: string;
+  createdAt: string;
+};
+
+export type SamBooksFeatureRequestDetailDecisionsItem = {
+  id: number;
+  decision: string;
+  /** @nullable */
+  comment: string | null;
+  /** @nullable */
+  wireframeVersion: number | null;
+  decidedBy: string;
+  createdAt: string;
+};
+
+export type SamBooksFeatureRequestDetailAuditItem = {
+  id: number;
+  action: string;
+  actor: string;
+  createdAt: string;
+};
+
+export interface SamBooksFeatureRequestDetail {
+  id: number;
+  title: string;
+  problem: string;
+  outcome: string;
+  requirements: string[];
+  status: string;
+  changeScope: string;
+  organization: SamBooksFeatureRequestDetailOrganization;
+  module: SamBooksFeatureRequestDetailModule;
+  requester: SamBooksFeatureRequestDetailRequester;
+  wireframes: SamBooksFeatureRequestDetailWireframesItem[];
+  decisions: SamBooksFeatureRequestDetailDecisionsItem[];
+  audit: SamBooksFeatureRequestDetailAuditItem[];
+  /** @nullable */
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SamBooksFeatureRequestDecisionDecision = typeof SamBooksFeatureRequestDecisionDecision[keyof typeof SamBooksFeatureRequestDecisionDecision];
+
+
+export const SamBooksFeatureRequestDecisionDecision = {
+  approved: 'approved',
+  rejected: 'rejected',
+  changes_requested: 'changes_requested',
+} as const;
+
+export interface SamBooksFeatureRequestDecision {
+  decision: SamBooksFeatureRequestDecisionDecision;
+  /** @maxLength 4000 */
+  comment?: string;
+}
+
+export interface SamBooksFeatureRequestDecisionResult {
+  id: number;
+  status: string;
+}
+
+export type SamBooksAgentRunDetailEventsItem = {
+  id: number;
+  type: string;
+  message: string;
+  createdAt: string;
+};
+
+export type SamBooksAgentRunDetailChecksItem = {
+  id: number;
+  name: string;
+  status: string;
+  output: string;
+};
+
+export interface SamBooksAgentRunDetail {
+  id: number;
+  organizationId: number;
+  moduleId: number;
+  /** @nullable */
+  requestId: number | null;
+  status: string;
+  changeScope: string;
+  prompt: string;
+  /** @nullable */
+  summary: string | null;
+  /** @nullable */
+  error: string | null;
+  createdAt: string;
+  /** @nullable */
+  startedAt: string | null;
+  /** @nullable */
+  completedAt: string | null;
+  events: SamBooksAgentRunDetailEventsItem[];
+  checks: SamBooksAgentRunDetailChecksItem[];
+}
+
 export interface SamBooksQueueWindow {
   done: number;
   failed: number;
