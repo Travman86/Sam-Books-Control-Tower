@@ -406,7 +406,7 @@ export const decideManagementActionBodyNoteMax = 500;
 
 
 export const DecideManagementActionBody = zod.object({
-  "decision": zod.enum(['approved', 'rejected']),
+  "decision": zod.enum(['pending', 'approved', 'rejected']),
   "note": zod.string().max(decideManagementActionBodyNoteMax).optional()
 })
 
