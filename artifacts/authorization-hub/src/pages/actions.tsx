@@ -28,16 +28,17 @@ const COLUMNS = [
 ] as const
 
 /**
- * The "red/yellow/green" at-a-glance priority signal — applied as an inline
- * style rather than a Tailwind class so it always renders regardless of the
- * host app's border/merge setup (Card's own base classes already set a
- * generic `border`, and this must win reliably).
+ * The "red/yellow/green" at-a-glance signal is by status/column, not
+ * priority: pending = yellow (awaiting a call), approved = green, rejected
+ * = red. Applied as an inline style rather than a Tailwind class so it
+ * always renders regardless of the host app's border/merge setup (Card's
+ * own base classes already set a generic `border`, and this must win
+ * reliably).
  */
-const PRIORITY_COLOR: Record<string, string> = {
-  urgent: "#ef4444", // red
-  high: "#f87171", // red (lighter)
-  medium: "#f59e0b", // yellow/amber
-  low: "#22c55e", // green
+const STATUS_COLOR: Record<string, string> = {
+  pending: "#f59e0b", // yellow/amber
+  approved: "#22c55e", // green
+  rejected: "#ef4444", // red
 }
 
 function isDecision(id: string): id is "pending" | "approved" | "rejected" {
@@ -363,7 +364,7 @@ export default function Actions() {
                             style={{
                               ...dragProvided.draggableProps.style,
                               borderLeftWidth: 4,
-                              borderLeftColor: PRIORITY_COLOR[action.priority] ?? "#9ca3af",
+                              borderLeftColor: STATUS_COLOR[action.status] ?? "#9ca3af",
                             }}
                             className={cn(
                               "overflow-hidden transition-shadow hover:shadow-sm cursor-grab active:cursor-grabbing",
@@ -376,15 +377,18 @@ export default function Actions() {
                                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                                   {action.actionType.replace(/_/g, " ")}
                                 </span>
+                                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  {action.priority} priority
+                                </span>
                                 <span
                                   className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide"
-                                  style={{ color: PRIORITY_COLOR[action.priority] ?? "#9ca3af" }}
+                                  style={{ color: STATUS_COLOR[action.status] ?? "#9ca3af" }}
                                 >
                                   <span
                                     className="inline-block h-1.5 w-1.5 rounded-full"
-                                    style={{ backgroundColor: PRIORITY_COLOR[action.priority] ?? "#9ca3af" }}
+                                    style={{ backgroundColor: STATUS_COLOR[action.status] ?? "#9ca3af" }}
                                   />
-                                  {action.priority}
+                                  {action.status}
                                 </span>
                               </div>
                               <p className="text-sm font-semibold leading-snug">{action.target}</p>
