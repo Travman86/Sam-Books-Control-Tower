@@ -316,7 +316,7 @@ export const ListManagementActionsResponseItem = zod.object({
   "id": zod.string(),
   "projectId": zod.string(),
   "projectName": zod.string(),
-  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "actionType": zod.enum(['feature_request', 'create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
   "target": zod.string(),
   "description": zod.string(),
   "requestedBy": zod.string(),
@@ -342,7 +342,7 @@ export const ListManagementActionsResponse = zod.array(ListManagementActionsResp
 
 export const CreateManagementActionBody = zod.object({
   "projectId": zod.string(),
-  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "actionType": zod.enum(['feature_request', 'create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
   "target": zod.string().min(1),
   "description": zod.string().min(1),
   "requestedBy": zod.string().min(1),
@@ -355,7 +355,7 @@ export const CreateManagementActionResponse = zod.object({
   "id": zod.string(),
   "projectId": zod.string(),
   "projectName": zod.string(),
-  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "actionType": zod.enum(['feature_request', 'create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
   "target": zod.string(),
   "description": zod.string(),
   "requestedBy": zod.string(),
@@ -380,7 +380,7 @@ export const GetManagementActionResponse = zod.object({
   "id": zod.string(),
   "projectId": zod.string(),
   "projectName": zod.string(),
-  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "actionType": zod.enum(['feature_request', 'create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
   "target": zod.string(),
   "description": zod.string(),
   "requestedBy": zod.string(),
@@ -414,7 +414,7 @@ export const DecideManagementActionResponse = zod.object({
   "id": zod.string(),
   "projectId": zod.string(),
   "projectName": zod.string(),
-  "actionType": zod.enum(['create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "actionType": zod.enum(['feature_request', 'create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
   "target": zod.string(),
   "description": zod.string(),
   "requestedBy": zod.string(),
@@ -425,6 +425,25 @@ export const DecideManagementActionResponse = zod.object({
   "submittedAt": zod.coerce.date(),
   "decidedAt": zod.coerce.date().nullable(),
   "decisionNote": zod.string().nullable()
+})
+
+
+/**
+ * @summary Use AI to draft an action's fields from a one-line request
+ */
+export const draftManagementActionBodyPromptMax = 2000;
+
+
+
+export const DraftManagementActionBody = zod.object({
+  "prompt": zod.string().min(1).max(draftManagementActionBodyPromptMax)
+})
+
+export const DraftManagementActionResponse = zod.object({
+  "actionType": zod.enum(['feature_request', 'create_task', 'update_priority', 'reassign_owner', 'change_deadline', 'close_task', 'create_milestone', 'update_scope']),
+  "target": zod.string(),
+  "description": zod.string(),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent'])
 })
 
 

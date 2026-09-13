@@ -176,6 +176,7 @@ export type ManagementActionActionType = typeof ManagementActionActionType[keyof
 
 
 export const ManagementActionActionType = {
+  feature_request: 'feature_request',
   create_task: 'create_task',
   update_priority: 'update_priority',
   reassign_owner: 'reassign_owner',
@@ -228,6 +229,7 @@ export type ManagementActionInputActionType = typeof ManagementActionInputAction
 
 
 export const ManagementActionInputActionType = {
+  feature_request: 'feature_request',
   create_task: 'create_task',
   update_priority: 'update_priority',
   reassign_owner: 'reassign_owner',
@@ -275,6 +277,45 @@ export interface ManagementActionDecision {
   decision: ManagementActionDecisionDecision;
   /** @maxLength 500 */
   note?: string;
+}
+
+export interface ManagementActionAiDraftInput {
+  /**
+     * @minLength 1
+     * @maxLength 2000
+     */
+  prompt: string;
+}
+
+export type ManagementActionAiDraftActionType = typeof ManagementActionAiDraftActionType[keyof typeof ManagementActionAiDraftActionType];
+
+
+export const ManagementActionAiDraftActionType = {
+  feature_request: 'feature_request',
+  create_task: 'create_task',
+  update_priority: 'update_priority',
+  reassign_owner: 'reassign_owner',
+  change_deadline: 'change_deadline',
+  close_task: 'close_task',
+  create_milestone: 'create_milestone',
+  update_scope: 'update_scope',
+} as const;
+
+export type ManagementActionAiDraftPriority = typeof ManagementActionAiDraftPriority[keyof typeof ManagementActionAiDraftPriority];
+
+
+export const ManagementActionAiDraftPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  urgent: 'urgent',
+} as const;
+
+export interface ManagementActionAiDraft {
+  actionType: ManagementActionAiDraftActionType;
+  target: string;
+  description: string;
+  priority: ManagementActionAiDraftPriority;
 }
 
 export type SamBooksOverviewTotals = {

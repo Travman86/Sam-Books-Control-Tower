@@ -297,6 +297,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ManagementAction"
+  /management-actions/ai-draft:
+    post:
+      operationId: draftManagementAction
+      tags: [management]
+      summary: Use AI to draft an action's fields from a one-line request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManagementActionAiDraftInput"
+      responses:
+        "200":
+          description: Drafted action fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagementActionAiDraft"
+        "502":
+          description: AI drafting is not configured or the model call failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /sam-books/overview:
     get:
       operationId: getSamBooksOverview
@@ -617,7 +641,7 @@ components:
         projectName: { type: string }
         actionType:
           type: string
-          enum: [create_task, update_priority, reassign_owner, change_deadline, close_task, create_milestone, update_scope]
+          enum: [feature_request, create_task, update_priority, reassign_owner, change_deadline, close_task, create_milestone, update_scope]
         target: { type: string }
         description: { type: string }
         requestedBy: { type: string }
@@ -641,7 +665,7 @@ components:
         projectId: { type: string }
         actionType:
           type: string
-          enum: [create_task, update_priority, reassign_owner, change_deadline, close_task, create_milestone, update_scope]
+          enum: [feature_request, create_task, update_priority, reassign_owner, change_deadline, close_task, create_milestone, update_scope]
         target: { type: string, minLength: 1 }
         description: { type: string, minLength: 1 }
         requestedBy: { type: string, minLength: 1 }
@@ -661,6 +685,23 @@ components:
           enum: [approved, rejected]
         note: { type: string, maxLength: 500 }
       required: [decision]
+    ManagementActionAiDraftInput:
+      type: object
+      properties:
+        prompt: { type: string, minLength: 1, maxLength: 2000 }
+      required: [prompt]
+    ManagementActionAiDraft:
+      type: object
+      properties:
+        actionType:
+          type: string
+          enum: [feature_request, create_task, update_priority, reassign_owner, change_deadline, close_task, create_milestone, update_scope]
+        target: { type: string }
+        description: { type: string }
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+      required: [actionType, target, description, priority]
     SamBooksOverview:
       type: object
       properties:

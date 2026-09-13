@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ManagementActionActionType = typeof ManagementActionActionType[keyof typeof ManagementActionActionType];
+export type ManagementActionAiDraftActionType = typeof ManagementActionAiDraftActionType[keyof typeof ManagementActionAiDraftActionType];
 
 
-export const ManagementActionActionType = {
+export const ManagementActionAiDraftActionType = {
   feature_request: 'feature_request',
   create_task: 'create_task',
   update_priority: 'update_priority',
