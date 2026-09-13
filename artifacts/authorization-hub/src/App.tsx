@@ -13,7 +13,11 @@ import ReviewDetail from '@/pages/review-detail';
 import Actions from '@/pages/actions';
 import ActionDetail from '@/pages/action-detail';
 import Activity from '@/pages/activity';
-import SamBooks from '@/pages/sam-books';
+import SamBooksOverview from '@/pages/sam-books-overview';
+import SamBooksProjects from '@/pages/sam-books-projects';
+import SamBooksApprovals from '@/pages/sam-books-approvals';
+import SamBooksAgentRuns from '@/pages/sam-books-agent-runs';
+import SamBooksPerformance from '@/pages/sam-books-performance';
 import {
   Route,
   Switch,
@@ -36,7 +40,11 @@ function Router() {
           <Route path="/actions" component={Actions} />
           <Route path="/actions/:id" component={ActionDetail} />
           <Route path="/activity" component={Activity} />
-          <Route path="/sam-books" component={SamBooks} />
+          <Route path="/sam-books" component={SamBooksOverview} />
+          <Route path="/sam-books/projects" component={SamBooksProjects} />
+          <Route path="/sam-books/approvals" component={SamBooksApprovals} />
+          <Route path="/sam-books/agent-runs" component={SamBooksAgentRuns} />
+          <Route path="/sam-books/performance" component={SamBooksPerformance} />
           <Route component={NotFound} />
         </Switch>
       </RoutedErrorBoundary>
