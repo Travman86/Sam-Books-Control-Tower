@@ -27,12 +27,21 @@ const COLUMNS = [
   { id: "rejected", label: "Rejected" },
 ] as const
 
-/** Left-edge accent by priority — the "red/yellow/green" at-a-glance signal. */
-const PRIORITY_ACCENT: Record<string, string> = {
-  urgent: "border-l-4 border-l-red-500",
-  high: "border-l-4 border-l-red-400",
-  medium: "border-l-4 border-l-amber-400",
-  low: "border-l-4 border-l-green-500",
+/**
+ * The "red/yellow/green" at-a-glance priority signal — applied as an inline
+ * style rather than a Tailwind class so it always renders regardless of the
+ * host app's border/merge setup (Card's own base classes already set a
+ * generic `border`, and this must win reliably).
+ */
+const PRIORITY_COLOR: Record<string, string> = {
+  urgent: "#ef4444", // red
+  high: "#f87171", // red (lighter)
+  medium: "#f59e0b", // yellow/amber
+  low: "#22c55e", // green
+}
+
+function isDecision(id: string): id is "pending" | "approved" | "rejected" {
+  return id === "pending" || id === "approved" || id === "rejected"
 }
 
 export default function Actions() {
@@ -128,10 +137,9 @@ export default function Actions() {
   const handleDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result
     if (!destination || destination.droppableId === source.droppableId) return
-    // The API only allows deciding a *pending* action — dragging out of
-    // Approved/Rejected (or between them) isn't a supported transition.
-    if (source.droppableId !== "pending") return
-    if (destination.droppableId !== "approved" && destination.droppableId !== "rejected") return
+    // Any column to any other column — approve, reject, or drag back to
+    // Pending to undo a decision.
+    if (!isDecision(destination.droppableId)) return
 
     decideAction.mutate(
       { actionId: draggableId, data: { decision: destination.droppableId } },
@@ -158,7 +166,7 @@ export default function Actions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Management Actions</h1>
-          <p className="text-muted-foreground mt-2">Govern project-management actions proposed by AI agents. Drag a pending card to decide it.</p>
+          <p className="text-muted-foreground mt-2">Govern project-management actions proposed by AI agents. Drag a card between columns to decide it, or move it back to Pending to undo.</p>
         </div>
         <Button onClick={() => setIsProposing(!isProposing)}>
           {isProposing ? "Cancel Proposal" : <><Plus className="mr-2 w-4 h-4" /> Propose Action</>}
@@ -346,15 +354,19 @@ export default function Actions() {
                     </div>
 
                     {columns[column.id]?.map((action, index) => (
-                      <Draggable key={action.id} draggableId={action.id} index={index} isDragDisabled={column.id !== "pending"}>
+                      <Draggable key={action.id} draggableId={action.id} index={index}>
                         {(dragProvided, dragSnapshot) => (
                           <Card
                             ref={dragProvided.innerRef}
                             {...dragProvided.draggableProps}
                             {...dragProvided.dragHandleProps}
+                            style={{
+                              ...dragProvided.draggableProps.style,
+                              borderLeftWidth: 4,
+                              borderLeftColor: PRIORITY_COLOR[action.priority] ?? "#9ca3af",
+                            }}
                             className={cn(
-                              "overflow-hidden transition-shadow hover:shadow-sm",
-                              PRIORITY_ACCENT[action.priority] ?? "border-l-4 border-l-muted",
+                              "overflow-hidden transition-shadow hover:shadow-sm cursor-grab active:cursor-grabbing",
                               dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/40",
                             )}
                           >
@@ -363,6 +375,16 @@ export default function Actions() {
                                 <Badge variant="outline" className="font-mono text-[10px] bg-background">{action.projectName}</Badge>
                                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                                   {action.actionType.replace(/_/g, " ")}
+                                </span>
+                                <span
+                                  className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide"
+                                  style={{ color: PRIORITY_COLOR[action.priority] ?? "#9ca3af" }}
+                                >
+                                  <span
+                                    className="inline-block h-1.5 w-1.5 rounded-full"
+                                    style={{ backgroundColor: PRIORITY_COLOR[action.priority] ?? "#9ca3af" }}
+                                  />
+                                  {action.priority}
                                 </span>
                               </div>
                               <p className="text-sm font-semibold leading-snug">{action.target}</p>

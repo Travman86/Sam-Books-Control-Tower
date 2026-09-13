@@ -682,7 +682,9 @@ components:
       properties:
         decision:
           type: string
-          enum: [approved, rejected]
+          # "pending" lets a card be dragged back to the queue (undo an
+          # approve/reject), matching the Kanban board's free movement.
+          enum: [pending, approved, rejected]
         note: { type: string, maxLength: 500 }
       required: [decision]
     ManagementActionAiDraftInput:

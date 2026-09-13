@@ -463,31 +463,32 @@ router.patch(
         .json({ error: params.error?.message ?? body.error?.message });
       return;
     }
+    // The Kanban board allows moving a card between any of the three
+    // columns at any time (including back to Pending, to undo a decision) —
+    // unlike a one-way approval flow, so this doesn't gate on the action's
+    // current status.
+    const isPending = body.data.decision === "pending";
     const [action] = await db
       .update(managementActionsTable)
       .set({
         status: body.data.decision,
-        decisionNote: body.data.note ?? null,
-        decidedAt: new Date(),
+        decisionNote: isPending ? null : body.data.note ?? null,
+        decidedAt: isPending ? null : new Date(),
       })
-      .where(
-        and(
-          eq(managementActionsTable.id, params.data.actionId),
-          eq(managementActionsTable.status, "pending"),
-        ),
-      )
+      .where(eq(managementActionsTable.id, params.data.actionId))
       .returning();
     if (!action) {
-      res
-        .status(404)
-        .json({ error: "Pending project management action not found" });
+      res.status(404).json({ error: "Project management action not found" });
       return;
     }
     const views = await managementActionViews();
     const view = views.find((item) => item.id === action.id)!;
     await db.insert(activityTable).values({
-      kind: body.data.decision,
-      title: `${view.target} ${body.data.decision}`,
+      // "pending" isn't a valid Activity.kind (that enum only knows
+      // submitted/approved/rejected/connected/revoked) — a move back to the
+      // queue is logged as a re-submission instead.
+      kind: isPending ? "submitted" : body.data.decision,
+      title: isPending ? `${view.target} moved back to pending` : `${view.target} ${body.data.decision}`,
       detail:
         body.data.note ||
         `Project management action reviewed for ${view.projectName}.`,
