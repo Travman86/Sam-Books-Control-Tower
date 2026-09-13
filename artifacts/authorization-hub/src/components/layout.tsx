@@ -18,10 +18,12 @@ import {
   ChevronRight,
   ChevronDown,
   Menu,
+  LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { useLogoutMutation } from "@/hooks/use-auth"
 
 /**
  * This app IS the Sam Books Control Tower — a cross-project back-office, not
@@ -178,6 +180,25 @@ function NavGroup({
   )
 }
 
+function SignOutButton({ collapsed }: { collapsed?: boolean }) {
+  const logout = useLogoutMutation()
+  return (
+    <button
+      type="button"
+      onClick={() => logout.mutate()}
+      disabled={logout.isPending}
+      title={collapsed ? "Sign out" : undefined}
+      className={cn(
+        "flex items-center gap-3 h-10 rounded-md text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors disabled:opacity-50",
+        collapsed ? "justify-center px-0 w-full" : "px-3 w-full",
+      )}
+    >
+      <LogOut className="w-4 h-4 shrink-0" />
+      {!collapsed && <span>{logout.isPending ? "Signing out…" : "Sign out"}</span>}
+    </button>
+  )
+}
+
 function Brand({ collapsed }: { collapsed?: boolean }) {
   return (
     <div className={cn("h-16 flex items-center gap-3 border-b border-sidebar-border shrink-0", collapsed ? "justify-center px-0" : "px-5")}>
@@ -217,6 +238,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <SamBooksNav location={location} collapsed={false} onNavigate={() => setMobileOpen(false)} />
                 <NavGroup title="Authorization" items={AUTHORIZATION_NAV} location={location} collapsed={false} onNavigate={() => setMobileOpen(false)} />
               </nav>
+              <div className="px-3 py-3 border-t border-sidebar-border">
+                <SignOutButton />
+              </div>
             </div>
           </SheetContent>
         </Sheet>
@@ -232,6 +256,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <SamBooksNav location={location} collapsed={collapsed} />
           <NavGroup title="Authorization" items={AUTHORIZATION_NAV} location={location} collapsed={collapsed} />
         </nav>
+        <div className={cn("px-3 py-3 border-t border-sidebar-border", collapsed && "px-2")}>
+          <SignOutButton collapsed={collapsed} />
+        </div>
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}

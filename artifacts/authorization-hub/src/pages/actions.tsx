@@ -1,5 +1,8 @@
 import * as React from "react"
 import { Link } from "wouter"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import {
   useListManagementActions,
   useListProjects,
@@ -9,13 +12,20 @@ import {
   getListManagementActionsQueryKey,
   getGetDashboardQueryKey,
   getListActivityQueryKey,
+  ManagementActionInputActionType,
+  ManagementActionInputPriority,
 } from "@workspace/api-client-react"
 import type { ManagementAction } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ListTodo, Plus, ArrowRight, Clock, Filter, Sparkles, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
@@ -41,36 +51,61 @@ const STATUS_COLOR: Record<string, string> = {
   rejected: "#ef4444", // red
 }
 
+const ACTION_TYPE_LABEL: Record<string, string> = {
+  feature_request: "Feature Request",
+  create_task: "Create Task",
+  update_priority: "Update Priority",
+  reassign_owner: "Reassign Owner",
+  change_deadline: "Change Deadline",
+  close_task: "Close Task",
+  create_milestone: "Create Milestone",
+  update_scope: "Update Scope",
+}
+
 function isDecision(id: string): id is "pending" | "approved" | "rejected" {
   return id === "pending" || id === "approved" || id === "rejected"
 }
 
+const actionSchema = z.object({
+  projectId: z.string().min(1, "Project is required"),
+  actionType: z.nativeEnum(ManagementActionInputActionType),
+  target: z.string().min(1, "Target is required"),
+  description: z.string().min(1, "Description is required"),
+  requestedBy: z.string().min(1, "Requested-by is required"),
+  approver: z.string().min(1, "Approver is required"),
+  priority: z.nativeEnum(ManagementActionInputPriority),
+  dueDate: z.string(),
+})
+type ActionFormValues = z.infer<typeof actionSchema>
+
 export default function Actions() {
   const [projectFilter, setProjectFilter] = React.useState<string>("")
+  const [isProposeOpen, setIsProposeOpen] = React.useState(false)
+  const [aiPrompt, setAiPrompt] = React.useState("")
 
   const { data: actions, isLoading } = useListManagementActions({
     projectId: projectFilter || undefined,
   })
-
   const { data: projects } = useListProjects()
 
-  const [isProposing, setIsProposing] = React.useState(false)
   const queryClient = useQueryClient()
   const createAction = useCreateManagementAction()
   const decideAction = useDecideManagementAction()
   const draftAction = useDraftManagementAction()
   const { toast } = useToast()
 
-  const [aiPrompt, setAiPrompt] = React.useState("")
-  const [formData, setFormData] = React.useState({
-    projectId: "",
-    actionType: "create_task",
-    target: "",
-    description: "",
-    requestedBy: "agent-alpha",
-    approver: "human-admin",
-    priority: "medium",
-    dueDate: "",
+  const form = useForm<ActionFormValues>({
+    resolver: zodResolver(actionSchema),
+    defaultValues: {
+      projectId: "",
+      actionType: ManagementActionInputActionType.create_task,
+      target: "",
+      description: "",
+      requestedBy: "agent-alpha",
+      approver: "human-admin",
+      priority: ManagementActionInputPriority.medium,
+      dueDate: "",
+    },
   })
 
   const handleAiFill = () => {
@@ -79,13 +114,10 @@ export default function Actions() {
       { data: { prompt: aiPrompt.trim() } },
       {
         onSuccess: (draft) => {
-          setFormData((prev) => ({
-            ...prev,
-            actionType: draft.actionType,
-            target: draft.target,
-            description: draft.description,
-            priority: draft.priority,
-          }))
+          form.setValue("actionType", draft.actionType, { shouldValidate: true })
+          form.setValue("target", draft.target, { shouldValidate: true })
+          form.setValue("description", draft.description, { shouldValidate: true })
+          form.setValue("priority", draft.priority, { shouldValidate: true })
           toast({ title: "Draft filled", description: "Review the fields below, then submit." })
         },
         onError: (err) => {
@@ -99,35 +131,21 @@ export default function Actions() {
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    createAction.mutate({
-      data: {
-        ...formData,
-        actionType: formData.actionType as any,
-        priority: formData.priority as any,
-        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+  const onSubmit = (data: ActionFormValues) => {
+    createAction.mutate(
+      { data: { ...data, dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null } },
+      {
+        onSuccess: () => {
+          toast({ title: "Proposal submitted", description: "The management action was successfully proposed." })
+          setIsProposeOpen(false)
+          queryClient.invalidateQueries({ queryKey: getListManagementActionsQueryKey() })
+          queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() })
+          queryClient.invalidateQueries({ queryKey: getListActivityQueryKey() })
+          setAiPrompt("")
+          form.reset()
+        },
       },
-    }, {
-      onSuccess: () => {
-        toast({ title: "Proposal submitted", description: "The management action was successfully proposed." })
-        setIsProposing(false)
-        queryClient.invalidateQueries({ queryKey: getListManagementActionsQueryKey() })
-        queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() })
-        queryClient.invalidateQueries({ queryKey: getListActivityQueryKey() })
-        setAiPrompt("")
-        setFormData({
-          projectId: "",
-          actionType: "create_task",
-          target: "",
-          description: "",
-          requestedBy: "agent-alpha",
-          approver: "human-admin",
-          priority: "medium",
-          dueDate: "",
-        })
-      },
-    })
+    )
   }
 
   const columns: Record<string, ManagementAction[]> = { pending: [], approved: [], rejected: [] }
@@ -164,26 +182,29 @@ export default function Actions() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Management Actions</h1>
-          <p className="text-muted-foreground mt-2">Govern project-management actions proposed by AI agents. Drag a card between columns to decide it, or move it back to Pending to undo.</p>
+          <p className="text-muted-foreground mt-1">
+            Govern project-management actions proposed by AI agents. Drag a card between columns to decide it, or move it back to Pending to undo.
+          </p>
         </div>
-        <Button onClick={() => setIsProposing(!isProposing)}>
-          {isProposing ? "Cancel Proposal" : <><Plus className="mr-2 w-4 h-4" /> Propose Action</>}
-        </Button>
-      </div>
 
-      {isProposing && (
-        <Card className="border-primary/50 shadow-sm animate-in zoom-in-95 duration-200">
-          <CardHeader>
-            <CardTitle>Propose Management Action</CardTitle>
-            <CardDescription>Submit a new project modification or task for human approval.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-5 flex flex-col sm:flex-row gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
-              <input
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        <Dialog open={isProposeOpen} onOpenChange={setIsProposeOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Propose Action
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Propose Management Action</DialogTitle>
+              <DialogDescription>Submit a new project modification or task for human approval.</DialogDescription>
+            </DialogHeader>
+
+            <div className="flex flex-col sm:flex-row gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+              <Input
+                className="bg-background"
                 placeholder={'Describe it in one line, e.g. "reprioritize the export button work to urgent"'}
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
@@ -194,135 +215,178 @@ export default function Actions() {
               </Button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Project</label>
-                  <select
-                    required
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.projectId}
-                    onChange={e => setFormData({...formData, projectId: e.target.value})}
-                  >
-                    <option value="" disabled>Select a project</option>
-                    {projects?.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="projectId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a project" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {projects?.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Action Type</label>
-                  <select
-                    required
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.actionType}
-                    onChange={e => setFormData({...formData, actionType: e.target.value})}
-                  >
-                    <option value="feature_request">Feature Request</option>
-                    <option value="create_task">Create Task</option>
-                    <option value="update_priority">Update Priority</option>
-                    <option value="reassign_owner">Reassign Owner</option>
-                    <option value="change_deadline">Change Deadline</option>
-                    <option value="close_task">Close Task</option>
-                    <option value="create_milestone">Create Milestone</option>
-                    <option value="update_scope">Update Scope</option>
-                  </select>
-                </div>
+                  <FormField
+                    control={form.control}
+                    name="actionType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Action Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(ACTION_TYPE_LABEL).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium">Target (Ticket ID, Milestone name, etc.)</label>
-                  <input
-                    required
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.target}
-                    onChange={e => setFormData({...formData, target: e.target.value})}
-                    placeholder="e.g. TASK-1234 or v2.0 Release"
+                  <FormField
+                    control={form.control}
+                    name="target"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel>Target</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. TASK-1234 or v2.0 Release" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Why is this action needed?" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Due Date (optional)</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="requestedBy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Requested By (Agent ID)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="approver"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Designated Approver</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium">Description</label>
-                  <textarea
-                    required
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.description}
-                    onChange={e => setFormData({...formData, description: e.target.value})}
-                    placeholder="Why is this action needed?"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Priority</label>
-                  <select
-                    required
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.priority}
-                    onChange={e => setFormData({...formData, priority: e.target.value})}
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Due Date (Optional)</label>
-                  <input
-                    type="date"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.dueDate}
-                    onChange={e => setFormData({...formData, dueDate: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Requested By (Agent ID)</label>
-                  <input
-                    required
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.requestedBy}
-                    onChange={e => setFormData({...formData, requestedBy: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Designated Approver</label>
-                  <input
-                    required
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.approver}
-                    onChange={e => setFormData({...formData, approver: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <Button type="submit" disabled={createAction.isPending}>
-                  {createAction.isPending ? "Submitting..." : "Submit Proposal"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+                <DialogFooter className="pt-2">
+                  <Button type="button" variant="outline" onClick={() => setIsProposeOpen(false)}>Cancel</Button>
+                  <Button type="submit" disabled={createAction.isPending}>
+                    {createAction.isPending ? "Submitting..." : "Submit Proposal"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-muted/40 p-4 rounded-lg border border-border">
         <div className="flex items-center gap-2 mr-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm font-medium">Filter</span>
         </div>
-        <select
-          className="flex h-9 w-full sm:w-[250px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          value={projectFilter}
-          onChange={e => setProjectFilter(e.target.value)}
-        >
-          <option value="">All Projects</option>
-          {projects?.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+        <Select value={projectFilter || "all"} onValueChange={(v) => setProjectFilter(v === "all" ? "" : v)}>
+          <SelectTrigger className="w-full sm:w-[250px] bg-background">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Projects</SelectItem>
+            {projects?.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? (

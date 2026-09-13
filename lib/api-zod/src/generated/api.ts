@@ -9,6 +9,35 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Authenticate as the Control Tower admin
+ */
+
+
+
+export const LoginBody = zod.object({
+  "password": zod.string().min(1)
+})
+
+export const LoginResponse = zod.object({
+  "authenticated": zod.boolean()
+})
+
+
+/**
+ * @summary End the current admin session
+ */
+export const LogoutResponse = zod.void()
+
+
+/**
+ * @summary Check whether the current session is authenticated
+ */
+export const GetAuthStatusResponse = zod.object({
+  "authenticated": zod.boolean()
+})
+
+
+/**
  * Returns server health status
  * @summary Health check
  */
