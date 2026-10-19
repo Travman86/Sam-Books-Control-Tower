@@ -75,6 +75,8 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 overrides:
+  # Patch Express's transitive dependency; 2.0.7 is blocked by GHSA-jqcg-44mw-7w3h.
+  "express>proxy-addr": "2.0.8"
   # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/darwin-arm64": "-"
   "esbuild>@esbuild/darwin-x64": "-"
