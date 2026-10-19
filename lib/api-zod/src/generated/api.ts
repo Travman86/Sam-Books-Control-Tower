@@ -334,6 +334,138 @@ export const ListActivityResponse = zod.array(ListActivityResponseItem)
 
 
 /**
+ * @summary Redacted operational snapshot with explicit source coverage
+ */
+export const GetSamBooksMonitoringResponse = zod.object({
+  "checkedAt": zod.coerce.date(),
+  "connection": zod.object({
+  "configured": zod.boolean(),
+  "hostname": zod.string().nullable(),
+  "environment": zod.string().nullable(),
+  "identityVerified": zod.boolean(),
+  "explanation": zod.string()
+}),
+  "overviewSource": zod.object({
+  "status": zod.enum(['available', 'not_connected', 'not_available', 'stale']),
+  "checkedAt": zod.coerce.date(),
+  "lastSuccessfulAt": zod.coerce.date().nullable(),
+  "generatedAt": zod.coerce.date().nullable(),
+  "message": zod.string()
+}),
+  "metricsSource": zod.object({
+  "status": zod.enum(['available', 'not_connected', 'not_available', 'stale']),
+  "checkedAt": zod.coerce.date(),
+  "lastSuccessfulAt": zod.coerce.date().nullable(),
+  "generatedAt": zod.coerce.date().nullable(),
+  "message": zod.string()
+}),
+  "overview": zod.union([zod.object({
+  "totals": zod.object({
+  "organizations": zod.number().int(),
+  "users": zod.number().int(),
+  "platformAdmins": zod.number().int(),
+  "modules": zod.number().int(),
+  "activeSubscriptions": zod.number().int()
+}),
+  "organizations": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
+  "createdAt": zod.coerce.date(),
+  "subscriptionStatus": zod.string(),
+  "subscriptionHealthy": zod.boolean(),
+  "currentPeriodEnd": zod.coerce.date().nullable(),
+  "memberCount": zod.number().int(),
+  "transactionCount": zod.number().int(),
+  "moduleCount": zod.number().int()
+})),
+  "queues": zod.array(zod.object({
+  "name": zod.enum(['ingest', 'whatsappAgent']),
+  "pending": zod.number().int(),
+  "processing": zod.number().int(),
+  "failed24h": zod.number().int(),
+  "done24h": zod.number().int(),
+  "oldestPendingAgeSeconds": zod.number().int().nullable()
+})),
+  "recentFailures": zod.array(zod.object({
+  "kind": zod.enum(['ingest', 'whatsappAgent']),
+  "id": zod.number().int(),
+  "organizationId": zod.number().int().nullable(),
+  "organizationName": zod.string().nullable(),
+  "detail": zod.string(),
+  "error": zod.string().nullable(),
+  "at": zod.coerce.date()
+}))
+}),zod.null()]),
+  "metrics": zod.union([zod.object({
+  "generatedAt": zod.coerce.date(),
+  "statementIngest": zod.object({
+  "pending": zod.number().int(),
+  "processing": zod.number().int(),
+  "last7d": zod.object({
+  "done": zod.number().int(),
+  "failed": zod.number().int(),
+  "retried": zod.number().int(),
+  "successRate": zod.number().nullable(),
+  "avgSeconds": zod.number().nullable(),
+  "p95Seconds": zod.number().nullable()
+}),
+  "last30d": zod.object({
+  "done": zod.number().int(),
+  "failed": zod.number().int(),
+  "retried": zod.number().int(),
+  "successRate": zod.number().nullable(),
+  "avgSeconds": zod.number().nullable(),
+  "p95Seconds": zod.number().nullable()
+})
+}),
+  "whatsappAgent": zod.object({
+  "pending": zod.number().int(),
+  "processing": zod.number().int(),
+  "last7d": zod.object({
+  "done": zod.number().int(),
+  "failed": zod.number().int(),
+  "retried": zod.number().int(),
+  "successRate": zod.number().nullable(),
+  "avgSeconds": zod.number().nullable(),
+  "p95Seconds": zod.number().nullable()
+}),
+  "last30d": zod.object({
+  "done": zod.number().int(),
+  "failed": zod.number().int(),
+  "retried": zod.number().int(),
+  "successRate": zod.number().nullable(),
+  "avgSeconds": zod.number().nullable(),
+  "p95Seconds": zod.number().nullable()
+})
+}),
+  "pdfParsing": zod.object({
+  "correctionsLast7d": zod.number().int(),
+  "correctionsLast30d": zod.number().int()
+}),
+  "financeAgentUsage": zod.object({
+  "activeConversations7d": zod.number().int(),
+  "assistantMessages7d": zod.number().int(),
+  "toolCallingTurns7d": zod.number().int(),
+  "whatsappThreads": zod.number().int()
+}),
+  "growth": zod.object({
+  "newOrganizations30d": zod.number().int(),
+  "newUsers30d": zod.number().int(),
+  "transactions30d": zod.number().int()
+})
+}),zod.null()]),
+  "failures": zod.array(zod.object({
+  "id": zod.string(),
+  "operation": zod.enum(['ingest', 'whatsappAgent']),
+  "category": zod.string(),
+  "occurredAt": zod.coerce.date(),
+  "organizationId": zod.number().int().nullable()
+}))
+})
+
+
+/**
  * @summary List proposed project management actions
  */
 export const ListManagementActionsQueryParams = zod.object({

@@ -271,6 +271,18 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Activity"
+  /sam-books/monitoring:
+    get:
+      operationId: getSamBooksMonitoring
+      tags: [sam-books]
+      summary: Redacted operational snapshot with explicit source coverage
+      responses:
+        "200":
+          description: Connection and independent source results, including unavailable signals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitoringSnapshot"
   /management-actions:
     get:
       operationId: listManagementActions
@@ -930,6 +942,51 @@ components:
           type: string
           enum: [low, medium, high, urgent]
       required: [actionType, target, description, priority]
+    MonitoringSource:
+      type: object
+      required: [status, checkedAt, lastSuccessfulAt, generatedAt, message]
+      properties:
+        status: { type: string, enum: [available, not_connected, not_available, stale] }
+        checkedAt: { type: string, format: date-time }
+        lastSuccessfulAt: { type: ["string", "null"], format: date-time }
+        generatedAt: { type: ["string", "null"], format: date-time }
+        message: { type: string }
+    MonitoringFailure:
+      type: object
+      required: [id, operation, category, occurredAt, organizationId]
+      properties:
+        id: { type: string }
+        operation: { type: string, enum: [ingest, whatsappAgent] }
+        category: { type: string }
+        occurredAt: { type: string, format: date-time }
+        organizationId: { type: ["integer", "null"] }
+    MonitoringSnapshot:
+      type: object
+      required: [checkedAt, connection, overviewSource, metricsSource, overview, metrics, failures]
+      properties:
+        checkedAt: { type: string, format: date-time }
+        connection:
+          type: object
+          required: [configured, hostname, environment, identityVerified, explanation]
+          properties:
+            configured: { type: boolean }
+            hostname: { type: ["string", "null"] }
+            environment: { type: ["string", "null"] }
+            identityVerified: { type: boolean }
+            explanation: { type: string }
+        overviewSource: { $ref: "#/components/schemas/MonitoringSource" }
+        metricsSource: { $ref: "#/components/schemas/MonitoringSource" }
+        overview:
+          oneOf:
+            - $ref: "#/components/schemas/SamBooksOverview"
+            - { type: "null" }
+        metrics:
+          oneOf:
+            - $ref: "#/components/schemas/SamBooksMetrics"
+            - { type: "null" }
+        failures:
+          type: array
+          items: { $ref: "#/components/schemas/MonitoringFailure" }
     SamBooksOverview:
       type: object
       properties:

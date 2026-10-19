@@ -40,6 +40,7 @@ import type {
   ManagementActionDecision,
   ManagementActionInput,
   ManagementActionUpdate,
+  MonitoringSnapshot,
   NotFoundResponse,
   Project,
   ProjectInput,
@@ -1216,6 +1217,83 @@ export function useListActivity<TData = Awaited<ReturnType<typeof listActivity>>
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListActivityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetSamBooksMonitoringUrl = () => {
+
+
+
+
+  return `/api/sam-books/monitoring`
+}
+
+/**
+ * @summary Redacted operational snapshot with explicit source coverage
+ */
+export const getSamBooksMonitoring = async ( options?: Parameters<typeof customFetch>[1]): Promise<MonitoringSnapshot> => {
+
+  return customFetch<MonitoringSnapshot>(getGetSamBooksMonitoringUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSamBooksMonitoringQueryKey = () => {
+    return [
+    `/api/sam-books/monitoring`
+    ] as const;
+    }
+
+
+export const getGetSamBooksMonitoringQueryOptions = <TData = Awaited<ReturnType<typeof getSamBooksMonitoring>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSamBooksMonitoring>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSamBooksMonitoringQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSamBooksMonitoring>>> = ({ signal }) => getSamBooksMonitoring({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSamBooksMonitoring>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSamBooksMonitoringQueryResult = NonNullable<Awaited<ReturnType<typeof getSamBooksMonitoring>>>
+export type GetSamBooksMonitoringQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Redacted operational snapshot with explicit source coverage
+ */
+
+export function useGetSamBooksMonitoring<TData = Awaited<ReturnType<typeof getSamBooksMonitoring>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSamBooksMonitoring>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSamBooksMonitoringQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

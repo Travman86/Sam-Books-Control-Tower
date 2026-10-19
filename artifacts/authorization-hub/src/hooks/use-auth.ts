@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useGetAuthStatus, useLogin, useLogout, getGetAuthStatusQueryKey } from "@workspace/api-client-react"
+import { clearSignedOutSession } from "@/lib/session-cache"
 
 /** Single-admin session — see artifacts/api-server/src/routes/auth.ts. */
 export function useAuthStatus() {
@@ -21,10 +22,7 @@ export function useLogoutMutation() {
   const queryClient = useQueryClient()
   return useLogout({
     mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() })
-        queryClient.clear()
-      },
+      onSuccess: () => clearSignedOutSession(queryClient, getGetAuthStatusQueryKey()),
     },
   })
 }

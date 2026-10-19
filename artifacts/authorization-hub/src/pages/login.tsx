@@ -23,7 +23,7 @@ export default function Login() {
             <Radar className="w-6 h-6" />
           </div>
           <div>
-            <CardTitle className="text-xl">Control Tower</CardTitle>
+            <CardTitle className="text-xl">Sam Books <span className="block text-[11px] tracking-[0.2em] text-muted-foreground font-semibold">CONTROL TOWER</span></CardTitle>
             <CardDescription>Sign in to continue.</CardDescription>
           </div>
         </CardHeader>

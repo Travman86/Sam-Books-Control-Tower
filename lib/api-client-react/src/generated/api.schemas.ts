@@ -391,12 +391,51 @@ export interface ManagementActionAiDraft {
   priority: ManagementActionAiDraftPriority;
 }
 
-export type SamBooksOverviewTotals = {
-  organizations: number;
-  users: number;
-  platformAdmins: number;
-  modules: number;
-  activeSubscriptions: number;
+export type MonitoringSourceStatus = typeof MonitoringSourceStatus[keyof typeof MonitoringSourceStatus];
+
+
+export const MonitoringSourceStatus = {
+  available: 'available',
+  not_connected: 'not_connected',
+  not_available: 'not_available',
+  stale: 'stale',
+} as const;
+
+export interface MonitoringSource {
+  status: MonitoringSourceStatus;
+  checkedAt: string;
+  /** @nullable */
+  lastSuccessfulAt: string | null;
+  /** @nullable */
+  generatedAt: string | null;
+  message: string;
+}
+
+export type MonitoringFailureOperation = typeof MonitoringFailureOperation[keyof typeof MonitoringFailureOperation];
+
+
+export const MonitoringFailureOperation = {
+  ingest: 'ingest',
+  whatsappAgent: 'whatsappAgent',
+} as const;
+
+export interface MonitoringFailure {
+  id: string;
+  operation: MonitoringFailureOperation;
+  category: string;
+  occurredAt: string;
+  /** @nullable */
+  organizationId: number | null;
+}
+
+export type MonitoringSnapshotConnection = {
+  configured: boolean;
+  /** @nullable */
+  hostname: string | null;
+  /** @nullable */
+  environment: string | null;
+  identityVerified: boolean;
+  explanation: string;
 };
 
 export type SamBooksOverviewOrganizationsItemStatus = typeof SamBooksOverviewOrganizationsItemStatus[keyof typeof SamBooksOverviewOrganizationsItemStatus];
@@ -406,6 +445,30 @@ export const SamBooksOverviewOrganizationsItemStatus = {
   active: 'active',
   suspended: 'suspended',
 } as const;
+
+export type SamBooksOverviewQueuesItemName = typeof SamBooksOverviewQueuesItemName[keyof typeof SamBooksOverviewQueuesItemName];
+
+
+export const SamBooksOverviewQueuesItemName = {
+  ingest: 'ingest',
+  whatsappAgent: 'whatsappAgent',
+} as const;
+
+export type SamBooksOverviewRecentFailuresItemKind = typeof SamBooksOverviewRecentFailuresItemKind[keyof typeof SamBooksOverviewRecentFailuresItemKind];
+
+
+export const SamBooksOverviewRecentFailuresItemKind = {
+  ingest: 'ingest',
+  whatsappAgent: 'whatsappAgent',
+} as const;
+
+export type SamBooksOverviewTotals = {
+  organizations: number;
+  users: number;
+  platformAdmins: number;
+  modules: number;
+  activeSubscriptions: number;
+};
 
 export type SamBooksOverviewOrganizationsItem = {
   id: number;
@@ -421,14 +484,6 @@ export type SamBooksOverviewOrganizationsItem = {
   moduleCount: number;
 };
 
-export type SamBooksOverviewQueuesItemName = typeof SamBooksOverviewQueuesItemName[keyof typeof SamBooksOverviewQueuesItemName];
-
-
-export const SamBooksOverviewQueuesItemName = {
-  ingest: 'ingest',
-  whatsappAgent: 'whatsappAgent',
-} as const;
-
 export type SamBooksOverviewQueuesItem = {
   name: SamBooksOverviewQueuesItemName;
   pending: number;
@@ -438,14 +493,6 @@ export type SamBooksOverviewQueuesItem = {
   /** @nullable */
   oldestPendingAgeSeconds: number | null;
 };
-
-export type SamBooksOverviewRecentFailuresItemKind = typeof SamBooksOverviewRecentFailuresItemKind[keyof typeof SamBooksOverviewRecentFailuresItemKind];
-
-
-export const SamBooksOverviewRecentFailuresItemKind = {
-  ingest: 'ingest',
-  whatsappAgent: 'whatsappAgent',
-} as const;
 
 export type SamBooksOverviewRecentFailuresItem = {
   kind: SamBooksOverviewRecentFailuresItemKind;
@@ -465,6 +512,62 @@ export interface SamBooksOverview {
   organizations: SamBooksOverviewOrganizationsItem[];
   queues: SamBooksOverviewQueuesItem[];
   recentFailures: SamBooksOverviewRecentFailuresItem[];
+}
+
+export interface SamBooksQueueWindow {
+  done: number;
+  failed: number;
+  retried: number;
+  /** @nullable */
+  successRate: number | null;
+  /** @nullable */
+  avgSeconds: number | null;
+  /** @nullable */
+  p95Seconds: number | null;
+}
+
+export interface SamBooksQueueMetric {
+  pending: number;
+  processing: number;
+  last7d: SamBooksQueueWindow;
+  last30d: SamBooksQueueWindow;
+}
+
+export type SamBooksMetricsPdfParsing = {
+  correctionsLast7d: number;
+  correctionsLast30d: number;
+};
+
+export type SamBooksMetricsFinanceAgentUsage = {
+  activeConversations7d: number;
+  assistantMessages7d: number;
+  toolCallingTurns7d: number;
+  whatsappThreads: number;
+};
+
+export type SamBooksMetricsGrowth = {
+  newOrganizations30d: number;
+  newUsers30d: number;
+  transactions30d: number;
+};
+
+export interface SamBooksMetrics {
+  generatedAt: string;
+  statementIngest: SamBooksQueueMetric;
+  whatsappAgent: SamBooksQueueMetric;
+  pdfParsing: SamBooksMetricsPdfParsing;
+  financeAgentUsage: SamBooksMetricsFinanceAgentUsage;
+  growth: SamBooksMetricsGrowth;
+}
+
+export interface MonitoringSnapshot {
+  checkedAt: string;
+  connection: MonitoringSnapshotConnection;
+  overviewSource: MonitoringSource;
+  metricsSource: MonitoringSource;
+  overview: SamBooksOverview | null;
+  metrics: SamBooksMetrics | null;
+  failures: MonitoringFailure[];
 }
 
 /**
@@ -664,52 +767,6 @@ export interface SamBooksAgentRunDetail {
   completedAt: string | null;
   events: SamBooksAgentRunDetailEventsItem[];
   checks: SamBooksAgentRunDetailChecksItem[];
-}
-
-export interface SamBooksQueueWindow {
-  done: number;
-  failed: number;
-  retried: number;
-  /** @nullable */
-  successRate: number | null;
-  /** @nullable */
-  avgSeconds: number | null;
-  /** @nullable */
-  p95Seconds: number | null;
-}
-
-export interface SamBooksQueueMetric {
-  pending: number;
-  processing: number;
-  last7d: SamBooksQueueWindow;
-  last30d: SamBooksQueueWindow;
-}
-
-export type SamBooksMetricsPdfParsing = {
-  correctionsLast7d: number;
-  correctionsLast30d: number;
-};
-
-export type SamBooksMetricsFinanceAgentUsage = {
-  activeConversations7d: number;
-  assistantMessages7d: number;
-  toolCallingTurns7d: number;
-  whatsappThreads: number;
-};
-
-export type SamBooksMetricsGrowth = {
-  newOrganizations30d: number;
-  newUsers30d: number;
-  transactions30d: number;
-};
-
-export interface SamBooksMetrics {
-  generatedAt: string;
-  statementIngest: SamBooksQueueMetric;
-  whatsappAgent: SamBooksQueueMetric;
-  pdfParsing: SamBooksMetricsPdfParsing;
-  financeAgentUsage: SamBooksMetricsFinanceAgentUsage;
-  growth: SamBooksMetricsGrowth;
 }
 
 /**

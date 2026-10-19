@@ -1,0 +1,1 @@
+- [Control Tower monitoring](monitoring-scope.md) — operational scope, data honesty and boundary with the separate Sam Books application.

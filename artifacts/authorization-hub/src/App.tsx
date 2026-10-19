@@ -16,13 +16,22 @@ import ReviewDetail from '@/pages/review-detail';
 import Actions from '@/pages/actions';
 import ActionDetail from '@/pages/action-detail';
 import Activity from '@/pages/activity';
-import SamBooksOverview from '@/pages/sam-books-overview';
+import OpsOverview from '@/pages/ops/overview';
+import Journeys from '@/pages/ops/journeys';
+import StatementJourney from '@/pages/ops/statements';
+import Imports from '@/pages/ops/imports';
+import Performance from '@/pages/ops/performance';
+import DataQuality from '@/pages/ops/data-quality';
+import Dependencies from '@/pages/ops/dependencies';
+import Incidents from '@/pages/ops/incidents';
+import IncidentDetail from '@/pages/ops/incident-detail';
+import Releases from '@/pages/ops/releases';
+import { FilterProvider } from '@/lib/monitoring';
 import SamBooksProjects from '@/pages/sam-books-projects';
 import SamBooksApprovals from '@/pages/sam-books-approvals';
 import SamBooksApprovalDetail from '@/pages/sam-books-approval-detail';
 import SamBooksAgentRuns from '@/pages/sam-books-agent-runs';
 import SamBooksAgentRunDetail from '@/pages/sam-books-agent-run-detail';
-import SamBooksPerformance from '@/pages/sam-books-performance';
 import {
   Route,
   Switch,
@@ -34,10 +43,21 @@ const queryClient = new QueryClient();
 
 function Router() {
   return (
+    <FilterProvider>
     <Layout>
       <RoutedErrorBoundary>
         <Switch>
-          <Route path="/" component={Dashboard} />
+          <Route path="/" component={OpsOverview} />
+          <Route path="/governance" component={Dashboard} />
+          <Route path="/journeys" component={Journeys} />
+          <Route path="/journeys/statements" component={StatementJourney} />
+          <Route path="/imports" component={Imports} />
+          <Route path="/performance" component={Performance} />
+          <Route path="/data-quality" component={DataQuality} />
+          <Route path="/dependencies" component={Dependencies} />
+          <Route path="/incidents" component={Incidents} />
+          <Route path="/incidents/:id" component={IncidentDetail} />
+          <Route path="/releases" component={Releases} />
           <Route path="/projects" component={Projects} />
           <Route path="/policies" component={Policies} />
           <Route path="/reviews" component={Reviews} />
@@ -45,17 +65,18 @@ function Router() {
           <Route path="/actions" component={Actions} />
           <Route path="/actions/:id" component={ActionDetail} />
           <Route path="/activity" component={Activity} />
-          <Route path="/sam-books" component={SamBooksOverview} />
+          <Route path="/sam-books" component={OpsOverview} />
           <Route path="/sam-books/projects" component={SamBooksProjects} />
           <Route path="/sam-books/approvals" component={SamBooksApprovals} />
           <Route path="/sam-books/approvals/:id" component={SamBooksApprovalDetail} />
           <Route path="/sam-books/agent-runs" component={SamBooksAgentRuns} />
           <Route path="/sam-books/agent-runs/:id" component={SamBooksAgentRunDetail} />
-          <Route path="/sam-books/performance" component={SamBooksPerformance} />
+          <Route path="/sam-books/performance" component={Performance} />
           <Route component={NotFound} />
         </Switch>
       </RoutedErrorBoundary>
     </Layout>
+    </FilterProvider>
   );
 }
 

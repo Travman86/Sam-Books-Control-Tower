@@ -11,8 +11,10 @@ import {
   ListSamBooksAgentRunsResponse,
   GetSamBooksAgentRunResponse,
   GetSamBooksMetricsResponse,
+  GetSamBooksMonitoringResponse,
 } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
+import { metricsStale, safeConnection, safeFailures, safeOverview } from "../lib/monitoring";
 
 const router: IRouter = Router();
 
@@ -41,6 +43,7 @@ async function fetchSamBooks(path: string, init?: RequestInit): Promise<unknown>
   }
   const res = await fetch(`${base.replace(/\/$/, "")}/api/admin${path}`, {
     ...init,
+    signal: AbortSignal.timeout(15_000),
     headers: { "content-type": "application/json", ...(init?.headers ?? {}), "x-control-tower-key": key },
   });
   const data = await res.json().catch(() => ({}));
@@ -53,6 +56,61 @@ async function fetchSamBooks(path: string, init?: RequestInit): Promise<unknown>
   }
   return data;
 }
+
+router.get("/sam-books/monitoring", async (_req, res) => {
+  const checkedAt = new Date().toISOString();
+  const connection = safeConnection(
+    process.env["SAM_BOOKS_API_URL"],
+    Boolean(process.env["SAM_BOOKS_API_KEY"]),
+  );
+  const emptySource = {
+    status: connection.configured ? "not_available" : "not_connected",
+    checkedAt,
+    lastSuccessfulAt: null as string | null,
+    generatedAt: null as string | null,
+    message: connection.configured
+      ? "Source could not be read. No health conclusion can be drawn."
+      : "Sam Books monitoring is not connected.",
+  };
+  const [overviewResult, metricsResult] = await Promise.allSettled([
+    connection.configured
+      ? fetchSamBooks("/overview").then((data) => GetSamBooksOverviewResponse.parse(data))
+      : Promise.reject(new Error("Not connected")),
+    connection.configured
+      ? fetchSamBooks("/metrics").then((data) => GetSamBooksMetricsResponse.parse(data))
+      : Promise.reject(new Error("Not connected")),
+  ]);
+  const overview = overviewResult.status === "fulfilled" ? overviewResult.value : null;
+  const metrics = metricsResult.status === "fulfilled" ? metricsResult.value : null;
+  const completedAt = new Date().toISOString();
+  const stale = metrics ? metricsStale(metrics, Date.now()) : false;
+  // Do not log upstream error objects: they can include raw financial diagnostics.
+  res.setHeader("Cache-Control", "private, no-store");
+  res.json(GetSamBooksMonitoringResponse.parse({
+    checkedAt: completedAt,
+    connection,
+    overviewSource: overview ? {
+      ...emptySource,
+      status: "available",
+      checkedAt: completedAt,
+      lastSuccessfulAt: completedAt,
+      message: "Overview API read successfully. Producer timestamp and service heartbeat are not supplied; transport availability is not end-to-end health.",
+    } : emptySource,
+    metricsSource: metrics ? {
+      ...emptySource,
+      status: stale ? "stale" : "available",
+      checkedAt: completedAt,
+      lastSuccessfulAt: completedAt,
+      generatedAt: metrics.generatedAt,
+      message: stale
+        ? "The source snapshot is older than five minutes or its clock is inconsistent. Treat health as unknown."
+        : "Aggregate queue metrics read successfully. This is not end-to-end journey telemetry.",
+    } : emptySource,
+    overview: overview ? safeOverview(overview) : null,
+    metrics,
+    failures: safeFailures(overview),
+  }));
+});
 
 function handleUpstreamError(res: Response, err: unknown): void {
   if (err instanceof UpstreamError && err.status !== 502) {
