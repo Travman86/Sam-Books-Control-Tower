@@ -60,7 +60,7 @@ export default function ReviewDetail() {
   const isPending = review.status === 'pending'
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
+    <div className="w-full min-w-0 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <Button variant="ghost" size="sm" asChild className="-ml-4 mb-2">
         <Link href="/reviews">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Queue

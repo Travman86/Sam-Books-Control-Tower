@@ -70,7 +70,7 @@ export default function ActionDetail({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
+    <div className="w-full min-w-0 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <Button variant="ghost" size="sm" asChild className="mb-4 -ml-3 text-muted-foreground hover:text-foreground">
           <Link href="/actions"><ArrowLeft className="mr-2 w-4 h-4" /> Back to Queue</Link>

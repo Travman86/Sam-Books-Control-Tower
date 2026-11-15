@@ -53,13 +53,13 @@ function FilterBar({ governance }: { governance: boolean }) {
   const { org, days, setOrg, setDays } = useFilters()
   const { data } = useMonitoring()
   if (governance) {
-    return <div data-testid="note-filters-na" className="px-6 md:px-10 py-2 text-xs text-slate-600 bg-white/70 border-b border-slate-200">Shared monitoring filters (environment, organization, time) do not apply to governance screens.</div>
+    return <div data-testid="note-filters-na" className="shrink-0 px-4 sm:px-6 lg:px-8 py-2 text-xs text-slate-600 bg-white/70 border-b border-slate-200">Shared monitoring filters (environment, organization, time) do not apply to governance screens.</div>
   }
   const orgs = data?.overview?.organizations ?? []
   return (
-    <div className="px-6 md:px-10 py-2 bg-white/70 border-b border-slate-200 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" data-testid="bar-filters">
-      <label className="flex items-center gap-1.5 text-slate-600">Environment
-        <span className="border border-slate-200 bg-white rounded px-2 py-1 text-slate-800" data-testid="text-env">{!data ? "Unknown" : !data.connection.configured ? <b className="text-slate-500">Not connected</b> : <>{data.connection.hostname ?? "Connected deployment"} <b className="text-slate-500">NOT VERIFIED</b></>}</span>
+    <div className="min-w-0 shrink-0 px-4 sm:px-6 lg:px-8 py-2 bg-white/70 border-b border-slate-200 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" data-testid="bar-filters">
+      <label className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5 text-slate-600">Environment
+        <span className="min-w-0 max-w-full break-words border border-slate-200 bg-white rounded px-2 py-1 text-slate-800" data-testid="text-env">{!data ? "Unknown" : !data.connection.configured ? <b className="text-slate-500">Not connected</b> : <>{data.connection.hostname ?? "Connected deployment"} <b className="text-slate-500">NOT VERIFIED</b></>}</span>
       </label>
       <label className="flex items-center gap-1.5 text-slate-600">Organization
         <select data-testid="select-org" value={org} onChange={(e) => setOrg(e.target.value)} className="border border-slate-200 bg-white rounded px-2 py-1 text-slate-800 max-w-[12rem]">
@@ -134,9 +134,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="min-h-[100dvh] flex flex-col md:flex-row bg-background overflow-x-hidden">
+    <div className="h-[100dvh] w-full min-w-0 flex flex-col md:flex-row bg-background overflow-hidden">
       {/* Mobile header */}
-      <div className="md:hidden flex items-center justify-between px-4 h-14 bg-sidebar border-b border-sidebar-border sticky top-0 z-30">
+      <div className="md:hidden flex shrink-0 items-center justify-between px-4 h-14 bg-sidebar border-b border-sidebar-border sticky top-0 z-30">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center">
             <Radar className="w-4 h-4" />
@@ -187,10 +187,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </button>
       </aside>
 
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
         <FilterBar governance={isGovernance(location)} />
-        <div className="flex-1 overflow-auto p-6 md:p-10">
-          <div className="max-w-6xl mx-auto">{children}</div>
+        <div className="flex-1 min-h-0 min-w-0 overflow-auto p-4 sm:p-6 lg:p-8" data-testid="main-scroll-area">
+          <div className="w-full min-w-0" data-testid="page-content">{children}</div>
         </div>
       </main>
     </div>

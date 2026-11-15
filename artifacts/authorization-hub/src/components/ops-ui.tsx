@@ -34,17 +34,17 @@ export function PageHeader({ title, sub, right }: { title: string; sub?: ReactNo
 
 export function Panel({ title, note, children, className, right }: { title?: string; note?: ReactNode; children: ReactNode; className?: string; right?: ReactNode }) {
   return (
-    <section className={cn("bg-white border border-slate-200 rounded-lg", className)}>
+    <section className={cn("min-w-0 bg-white border border-slate-200 rounded-lg", className)}>
       {title && (
-        <header className="flex items-start justify-between gap-3 px-4 pt-3.5 pb-2">
-          <div>
+        <header className="flex flex-wrap items-start justify-between gap-3 px-4 pt-3.5 pb-2">
+          <div className="min-w-0">
             <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
             {note && <p className="text-xs text-slate-500 mt-0.5">{note}</p>}
           </div>
           {right}
         </header>
       )}
-      <div className="px-4 pb-4 pt-1">{children}</div>
+      <div className="min-w-0 overflow-x-auto px-4 pb-4 pt-1">{children}</div>
     </section>
   )
 }
@@ -56,7 +56,7 @@ export function NA({ children = "Not available" }: { children?: ReactNode }) {
 export function Metric({ label, value, sub, scope, testid }: { label: string; value: ReactNode; sub?: ReactNode; scope?: string; testid: string }) {
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-4 min-w-0" data-testid={testid}>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-xs font-medium text-slate-500">{label}</div>
         {scope && <Pill>{scope}</Pill>}
       </div>
