@@ -1,0 +1,5 @@
+.wrangler
+.wrangler-dry
+.dev.vars*
+.env*
+node_modules

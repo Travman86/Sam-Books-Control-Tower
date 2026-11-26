@@ -1,0 +1,61 @@
+// Sam Books Control Tower on Cloudflare: SPA via Workers Static Assets + API in one Container.
+//
+// Deploy:  pnpm --filter @workspace/cloudflare-edge run deploy
+// (builds the authorization-hub SPA, then `wrangler deploy` builds and pushes
+// the API image from ../../Dockerfile — Docker must be running).
+// Pushing to main deploys automatically (.github/workflows/deploy-cloudflare.yml).
+//
+// SECRETS — set once per value with
+//   pnpm --filter @workspace/cloudflare-edge exec wrangler secret put <NAME>
+//   DATABASE_URL                  PlanetScale, database control_tower, PgBouncer :6432,
+//                                 sslmode=verify-full (no `sslrootcert=system`)
+//   SESSION_SECRET                signs the admin session cookie (may be new: one re-login)
+//   CONTROL_TOWER_ADMIN_PASSWORD  the admin login password
+//   SAM_BOOKS_API_URL             Sam Books base URL; SAM_BOOKS_API_KEY = its CONTROL_TOWER_API_KEY
+//   S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY   R2 token scoped to the bucket below
+//   OPENAI_API_KEY                optional: "AI draft" button on Propose Action
+// Every string var and secret is passed into the container environment.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "sam-books-control-tower",
+  "account_id": "85fb1541373c78e0b296968487949f70",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "observability": { "enabled": true },
+
+  "assets": {
+    "directory": "../authorization-hub/dist/public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+
+  "containers": [
+    {
+      "class_name": "Backend",
+      "image": "../../Dockerfile",
+      "image_build_context": "../..",
+      // 1/4 vCPU, 1 GiB: a small Express API with no background work.
+      "instance_type": "basic",
+      // The Worker routes all traffic to ONE instance; the second slot lets a
+      // new version start while the old one stops during a rollout.
+      "max_instances": 2,
+      // Next to the database (PlanetScale eu-west-1) and the Irish client.
+      "constraints": { "regions": ["WEUR"] }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "BACKEND", "class_name": "Backend" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Backend"] }],
+
+  "vars": {
+    "STORAGE_BACKEND": "s3",
+    "S3_ENDPOINT": "https://85fb1541373c78e0b296968487949f70.r2.cloudflarestorage.com",
+    "S3_BUCKET": "sam-books-control-tower",
+    // Only the part after the first segment becomes the R2 key prefix
+    // (".private/uploads/<uuid>"), matching the keys copied from Replit.
+    "PRIVATE_OBJECT_DIR": "/r2/.private",
+    "PUBLIC_OBJECT_SEARCH_PATHS": "/r2/public"
+  }
+}
