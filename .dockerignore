@@ -1,0 +1,19 @@
+# Never ship secrets, local data or build leftovers into the image.
+.env
+.env.*
+**/.env
+**/.env.*
+*.dump
+**/*.dump
+attached_assets
+screenshots
+docs
+**/node_modules
+**/dist
+**/.cache
+**/*.tsbuildinfo
+.git
+.github
+.agents
+.local
+**/.wrangler

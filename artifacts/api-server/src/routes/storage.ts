@@ -2,7 +2,7 @@ import { Readable } from "stream";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { RequestUploadUrlBody, RequestUploadUrlResponse } from "@workspace/api-zod";
 import { isAuthenticated } from "./auth";
-import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
+import { ObjectNotFoundError, ObjectStorageService, type StoredObject } from "../lib/objectStorage";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -53,8 +53,7 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
     return;
   }
   try {
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-    const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+    const { uploadURL, objectPath } = await objectStorageService.getObjectEntityUpload();
     res.json(RequestUploadUrlResponse.parse({
       uploadURL,
       objectPath,
@@ -73,7 +72,7 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
 async function streamObject(
   req: Request,
   res: Response,
-  getFile: () => Promise<Awaited<ReturnType<ObjectStorageService["getObjectEntityFile"]>>>,
+  getFile: () => Promise<StoredObject>,
   errorMessage: string,
 ) {
   try {
